@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $valid = true;
         
-        // バリデーションチェック (簡略化)
+        // バリデーションチェック
         if (!preg_match('/^[0-9*#]*$/', $outbound_prefix)) {
             $message = '保存失敗: プレフィクスには数字、*、# のみ使用できます。';
             $message_type = 'error';

@@ -9,7 +9,7 @@ require_once 'php/CrmUserDbDriver.php';
 $userDb = new CrmUserDbDriver();
 $error_message = '';
 
-// 重要: 既にユーザーが存在する場合は、このページへのアクセスを拒否
+// 既にユーザーが存在する場合は、このページへのアクセスを拒否
 if ($userDb->countUsers() > 0) {
     header('Location: login-crm.php');
     exit;

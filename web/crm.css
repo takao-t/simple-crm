@@ -200,15 +200,13 @@ body.light-mode .btn-neutral:hover {
 /* ユーザー管理ページ (パスワード変更フォーム) */
 /* =================================== */
 .password-form {
-    /* グリッド定義を削除し、縦並び(ブロック)レイアウトに戻す */
     max-width: 400px; /* フォームの最大幅 */
 }
 .password-form label {
-    /* ラベルは入力欄の上に表示 */
     display: block;
     font-weight: bold;
     margin-bottom: 5px;
-    margin-top: 10px; /* 項目間の「上下の詰まり」を解消  */
+    margin-top: 10px;
 }
 .password-form strong {
     font-weight: bold;
@@ -216,7 +214,6 @@ body.light-mode .btn-neutral:hover {
     margin-bottom: 10px;
 }
 .password-form .btn {
-    /* ボタン上部の間隔を調整 */
     margin-top: 15px;
 }
 
@@ -227,26 +224,18 @@ body.light-mode .btn-neutral:hover {
 .input-with-button {
     display: flex;
     align-items: center;
-    /* 隙間を小さく */
     gap: 5px; 
 }
 
-/* * ボタンを配置するため、元の入力欄の幅を
- * 調整する必要があります。
- */
 .input-with-button .input-middle2 {
-    /* * .input-middle2 (10em) からボタン幅を引く 
-     * (input-middle2 が 10em の前提)
-     */
     width: 8.5em; 
 }
 
 /* 発信ボタンのスタイル */
 .btn-call {
-    /* .btn-row とスタイルを合わせる */
     padding: 1px 6px;
     font-size: 11px;
-    background-color: #4caf50; /* 成功・発信をイメージさせる緑 */
+    background-color: #4caf50;
     border-color: #388e3c;
     color: #ffffff !important;
     font-weight: bold;
@@ -255,15 +244,13 @@ body.light-mode .btn-neutral:hover {
     filter: brightness(1.2);
 }
 body.light-mode .btn-call {
-    /* ライトモードでも見やすいように */
     background-color: #2e7d32;
     border-color: #1b5e20;
 }
 
-/* ポップアップ停止中のメニューボタンを赤色で強調 */
 .menu a.active-danger {
-    background-color: rgba(217, 83, 79, 0.2); /* $btn-danger の薄い背景 */
-    color: #d9534f !important; /* 赤文字 */
+    background-color: rgba(217, 83, 79, 0.2);
+    color: #d9534f !important;
     font-weight: bold;
 }
 
@@ -273,10 +260,8 @@ body.light-mode .btn-call {
 
 .tab-navigation {
     display: flex;
-    /* 変数を使用してテーマ連動させる */
     border-bottom: 2px solid var(--border-color);
     margin-bottom: 15px;
-    /* 背景をSurface色にすることで、メイン背景との差分を作る */
     background-color: var(--surface-color);
     padding-top: 10px;
     padding-left: 10px;
@@ -286,11 +271,9 @@ body.light-mode .btn-call {
     padding: 10px 20px;
     margin-right: 5px;
     text-decoration: none;
-    /* 変数を使用 */
     color: var(--secondary-text-color);
-    /* 非アクティブ時はメニュー背景色などを使用 */
     background-color: var(--menu-bg-color);
-    border-radius: 5px 5px 0 0; /* 上だけ丸く */
+    border-radius: 5px 5px 0 0;
     border: 1px solid var(--border-color);
     border-bottom: none;
     font-weight: bold;
@@ -298,25 +281,16 @@ body.light-mode .btn-call {
 }
 
 .tab-item:hover {
-    /* ホバー時はプライマリカラーの薄い色をかける */
     background-color: rgba(137, 180, 250, 0.1);
     color: var(--primary-color);
 }
 
 /* アクティブなタブ */
 .tab-item.active {
-    /* コンテンツエリア(bodyの背景)と同じ色にして境界を消す */
     background-color: var(--bg-color);
-    
-    /* 文字色を強調 */
     color: var(--primary-color);
-    
-    /* 下線を背景色と同じにして「繋がっている」ように見せる */
     border-bottom: 2px solid var(--bg-color);
-    
-    margin-bottom: -2px;        /* 線の上に被せる */
+    margin-bottom: -2px;
     position: relative;
-    
-    /* アクティブなタブの上部にアクセントカラーをつける */
     border-top: 3px solid var(--primary-color);
 }
