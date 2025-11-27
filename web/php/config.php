@@ -1,0 +1,29 @@
+<?php
+/**
+ * システム設定ファイル
+ * データベースパス、機能フラグなど、インストール時に決定する値を定義する
+ */
+
+// --- データベース設定 ---
+// CRMユーザー用データベースのパス
+//define('USER_DB_PATH', __DIR__ . '/../db/crm_user_db.sqlite3');
+define('USER_DB_PATH', '/var/lib/simple_crm/crm_user_db.sqlite3');
+// CRM顧客用データベースのパス
+//define('CRM_DB_PATH', __DIR__ . '/../db/crm_db.sqlite3');
+define('CRM_DB_PATH', '/var/lib/simple_crm/crm_db.sqlite3');
+
+
+// --- 機能フラグ ---
+// CTIポップアップ機能の使用可否 (true: 有効 / false: 無効)
+// インストール時にポップアップを使用しない場合は 'false' に設定
+define('FEATURE_CTI_POPUP_ENABLED', true);
+//define('FEATURE_CTI_POPUP_ENABLED', false);
+
+// CTIタブローテーション設定
+// 同時に開くCTIポップアップタブの最大数
+define('MAX_CTI_TABS', 4);
+
+//
+// PBXにABSを使用する場合にはtrueを設定、使用しない場合にはfalse
+//
+define('USE_ABS', true);

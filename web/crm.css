@@ -1,0 +1,322 @@
+/* =================================== */
+/* CRM 専用スタイルシート (crm.css)    */
+/* =================================== */
+
+/* --- crm-page.php 固有レイアウト --- */
+.crm-grid-row {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    align-items: center;
+}
+.crm-label-group {
+    display: flex;
+    flex-direction: column;
+}
+.crm-label-group label {
+    font-size: 0.85em;
+    color: var(--secondary-text-color);
+    margin-bottom: 2px;
+}
+.crm-message-area {
+    margin-top: 20px;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    background-color: var(--surface-color);
+    min-height: 1.5em;
+    font-weight: bold;
+}
+.msg-success { color: #4caf50; }
+.msg-error { color: #f44336; }
+
+/* --- 検索結果テーブル (crm-page) --- */
+.search-result-list {
+    margin-top: 30px;
+    border-top: 1px solid var(--border-color);
+    padding-top: 20px;
+}
+.search-result-list table {
+    width: 100%;
+    border-collapse: collapse;
+}
+.search-result-list th, 
+.search-result-list td {
+    border-bottom: 1px solid var(--border-color);
+    padding: 8px;
+    text-align: left;
+}
+.search-result-list tr:hover {
+    background-color: rgba(137, 180, 250, 0.1);
+    cursor: pointer;
+}
+
+/* --- 一覧表示テーブル (list-page) --- */
+.customer-list-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+.customer-list-table th, 
+.customer-list-table td {
+    border-bottom: 1px solid var(--border-color);
+    padding: 10px 8px;
+    text-align: left;
+}
+.customer-list-table th {
+    background-color: var(--surface-color);
+    font-size: 0.9em;
+}
+.customer-list-table tbody tr {
+    cursor: pointer;
+}
+.customer-list-table tbody tr:hover {
+    background-color: rgba(137, 180, 250, 0.1);
+}
+
+/* --- ページネーション (両方で共通) --- */
+.pagination-container {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+}
+.pagination-summary {
+    font-size: 0.9em;
+    color: var(--secondary-text-color);
+}
+.pagination-links a, 
+.pagination-links span {
+    padding: 5px 10px;
+    margin: 0 2px;
+    text-decoration: none;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    color: var(--text-color);
+    font-size: 0.9em;
+}
+.pagination-links a:hover {
+    background-color: var(--surface-color);
+    border-color: var(--primary-color);
+}
+.pagination-links span.current-page {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--bg-color);
+    font-weight: bold;
+}
+.pagination-links span.disabled {
+    color: var(--border-color);
+    border-color: var(--surface-color);
+}
+
+/* --- カスタムボタン (Danger) --- */
+.btn-danger {
+    background-color: #d9534f;
+    border-color: #d43f3a;
+    color: #ffffff !important;
+}
+.btn-danger:hover {
+    filter: brightness(1.2);
+    background-color: #c9302c;
+    border-color: #ac2925;
+}
+
+.btn-neutral {
+    /* (ダークモード時) */
+    background-color: #5f6368; 
+    border-color: #5f6368;
+    color: #e8eaed;
+}
+.btn-neutral:hover {
+    filter: brightness(1.2);
+}
+body.light-mode .btn-neutral {
+    /* (ライトモード時) */
+    background-color: #a0a0a0;
+    border-color: #a0a0a0;
+    color: #ffffff;
+}
+body.light-mode .btn-neutral:hover {
+    background-color: #8a8a8a;
+}
+
+/* =================================== */
+/* ユーザー管理ページ (user-manage-page) */
+/* =================================== */
+
+.user-manage-section {
+    margin-bottom: 2.5em;
+    border-top: 1px solid var(--border-color);
+    padding-top: 1.5em;
+}
+.user-manage-section h3 {
+    margin-top: 0;
+    border: none;
+    padding-bottom: 0.5em;
+    margin-bottom: 1.2em;
+}
+.form-grid {
+    display: grid;
+    grid-template-columns: 180px 1fr; 
+    gap: 10px;
+    max-width: 500px;
+    align-items: center;
+    row-gap: 12px;
+}
+.form-grid label {
+    font-weight: bold;
+    text-align: right;
+}
+.form-grid .btn {
+    grid-column: 2 / 3; /* 2列目にボタンを配置 */
+    justify-self: start; /* 左寄せ */
+    margin-top: 5px;
+}
+
+/* ユーザー一覧テーブル */
+.user-list-table {
+    width: 100%;
+    max-width: 800px;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+.user-list-table th, 
+.user-list-table td {
+    border-bottom: 1px solid var(--border-color);
+    padding: 10px 8px;
+    text-align: left;
+}
+.user-list-table th {
+    background-color: var(--surface-color);
+    font-size: 0.9em;
+}
+.user-list-table .btn-danger {
+    padding: 1px 6px;
+    font-size: 11px;
+}
+
+/* =================================== */
+/* ユーザー管理ページ (パスワード変更フォーム) */
+/* =================================== */
+.password-form {
+    /* グリッド定義を削除し、縦並び(ブロック)レイアウトに戻す */
+    max-width: 400px; /* フォームの最大幅 */
+}
+.password-form label {
+    /* ラベルは入力欄の上に表示 */
+    display: block;
+    font-weight: bold;
+    margin-bottom: 5px;
+    margin-top: 10px; /* 項目間の「上下の詰まり」を解消  */
+}
+.password-form strong {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 10px;
+}
+.password-form .btn {
+    /* ボタン上部の間隔を調整 */
+    margin-top: 15px;
+}
+
+/* =================================== */
+/* Click2Call (C2C) ボタン用スタイル   */
+/* =================================== */
+
+.input-with-button {
+    display: flex;
+    align-items: center;
+    /* 隙間を小さく */
+    gap: 5px; 
+}
+
+/* * ボタンを配置するため、元の入力欄の幅を
+ * 調整する必要があります。
+ */
+.input-with-button .input-middle2 {
+    /* * .input-middle2 (10em) からボタン幅を引く 
+     * (input-middle2 が 10em の前提)
+     */
+    width: 8.5em; 
+}
+
+/* 発信ボタンのスタイル */
+.btn-call {
+    /* .btn-row とスタイルを合わせる */
+    padding: 1px 6px;
+    font-size: 11px;
+    background-color: #4caf50; /* 成功・発信をイメージさせる緑 */
+    border-color: #388e3c;
+    color: #ffffff !important;
+    font-weight: bold;
+}
+.btn-call:hover {
+    filter: brightness(1.2);
+}
+body.light-mode .btn-call {
+    /* ライトモードでも見やすいように */
+    background-color: #2e7d32;
+    border-color: #1b5e20;
+}
+
+/* ポップアップ停止中のメニューボタンを赤色で強調 */
+.menu a.active-danger {
+    background-color: rgba(217, 83, 79, 0.2); /* $btn-danger の薄い背景 */
+    color: #d9534f !important; /* 赤文字 */
+    font-weight: bold;
+}
+
+/* =================================== */
+/* タブナビゲーションのスタイル        */
+/* =================================== */
+
+.tab-navigation {
+    display: flex;
+    /* 変数を使用してテーマ連動させる */
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 15px;
+    /* 背景をSurface色にすることで、メイン背景との差分を作る */
+    background-color: var(--surface-color);
+    padding-top: 10px;
+    padding-left: 10px;
+}
+
+.tab-item {
+    padding: 10px 20px;
+    margin-right: 5px;
+    text-decoration: none;
+    /* 変数を使用 */
+    color: var(--secondary-text-color);
+    /* 非アクティブ時はメニュー背景色などを使用 */
+    background-color: var(--menu-bg-color);
+    border-radius: 5px 5px 0 0; /* 上だけ丸く */
+    border: 1px solid var(--border-color);
+    border-bottom: none;
+    font-weight: bold;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.tab-item:hover {
+    /* ホバー時はプライマリカラーの薄い色をかける */
+    background-color: rgba(137, 180, 250, 0.1);
+    color: var(--primary-color);
+}
+
+/* アクティブなタブ */
+.tab-item.active {
+    /* コンテンツエリア(bodyの背景)と同じ色にして境界を消す */
+    background-color: var(--bg-color);
+    
+    /* 文字色を強調 */
+    color: var(--primary-color);
+    
+    /* 下線を背景色と同じにして「繋がっている」ように見せる */
+    border-bottom: 2px solid var(--bg-color);
+    
+    margin-bottom: -2px;        /* 線の上に被せる */
+    position: relative;
+    
+    /* アクティブなタブの上部にアクセントカラーをつける */
+    border-top: 3px solid var(--primary-color);
+}
