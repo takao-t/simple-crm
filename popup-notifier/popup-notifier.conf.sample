@@ -1,0 +1,17 @@
+# listenするポート番号。デフォルトは8080。
+PORT=8989
+
+# triggerを使用する際のtoken
+SECRET_TOKEN=mytoken
+
+#ACL設定。デフォルト挙動は全てdenyなので注意。
+#ACLを設定しないとどこからも接続できない。
+
+# /api/trigger の許可リスト
+# 複数のIP/CIDRをカンマ区切りで
+# 例:ローカルホストのみ許可
+TRIGGER_ALLOW=127.0.0.1
+
+# /crmws (WebSocket) の許可リスト
+# 例: ローカルホストと社内LAN全体を許可
+CRMWS_ALLOW=127.0.0.1,192.168.0.0/16

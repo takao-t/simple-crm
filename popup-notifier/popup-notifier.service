@@ -1,0 +1,19 @@
+[Unit]
+Description=CTI WebSocket Server for CRM Pop-ups
+After=network.target
+
+[Service]
+# バイナリを直接実行する
+ExecStart=/usr/local/bin/popup-notifier
+# 実行ユーザー
+User=www-data
+Group=www-data
+# 標準出力/エラーをログとして systemd に任せる
+StandardOutput=journal
+StandardError=journal
+# 予期せぬ終了時に自動再起動する
+Restart=always
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target
