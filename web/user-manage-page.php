@@ -9,7 +9,8 @@ if (!class_exists('CrmUserDbDriver')) {
     require_once 'php/CrmUserDbDriver.php';
 }
 
-$userDb = new CrmUserDbDriver();
+$userDb = CrmUserDbDriver::createInstance();
+
 $message = '';
 $message_type = ''; // 'success' or 'error'
 

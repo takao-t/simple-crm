@@ -9,7 +9,7 @@ require_once 'php/CrmDbDriver.php';
 // --- ページネーション設定 ---
 define('ROWS_PER_PAGE', 20); 
 
-$crm = new CrmDbDriver();
+$crm = CrmDbDriver::createInstance();
 
 // --------------------------------------------------
 // 1. 五十音タブの定義

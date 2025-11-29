@@ -21,10 +21,9 @@ if(USE_ABS){
     require_once 'php/astman.php';
     require_once 'php/functions.php';
 }
+
 require_once 'php/CrmUserDbDriver.php';
-
-$userDb = new CrmUserDbDriver();
-
+$userDb = CrmUserDbDriver::createInstance();
 
 // 設定DBからポートを取得
 $WS_PORT = $userDb->getSystemSetting('ws_port', '');

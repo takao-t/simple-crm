@@ -4,14 +4,14 @@ if (!defined('CRM_SYSTEM_INCLUDED')) {
     die("Direct access is not permitted.");
 }
 
-// 検索結果の1ページあたりの表示件数
+// 追加: 検索結果の1ページあたりの表示件数
 define('SEARCH_ROWS_PER_PAGE', 10); // 「少なめ」に10件
 
 require_once 'php/CrmDbDriver.php';
 require_once 'php/CrmUserDbDriver.php';
 
-$crm = new CrmDbDriver();
-$userDb = new CrmUserDbDriver();
+$crm = CrmDbDriver::createInstance();
+$userDb = CrmUserDbDriver::createInstance();
 
 $message = '';
 $message_type = ''; // 'success' or 'error'

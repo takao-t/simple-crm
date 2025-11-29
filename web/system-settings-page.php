@@ -15,10 +15,11 @@ if ($current_user_weight < 90) {
 
 // (CrmDbDriverはインポート処理で使用するためここで読み込む)
 require_once 'php/CrmDbDriver.php'; 
-$crm = new CrmDbDriver();
+$crm = CrmDbDriver::createInstance();
 
 // (CrmUserDbDriver は index.php で読み込み済み)
-$userDb = new CrmUserDbDriver();
+$userDb = CrmUserDbDriver::createInstance();
+
 $message = '';
 $message_type = ''; // 'success' or 'error'
 
@@ -34,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $valid = true;
         
-        // バリデーションチェック
+        // バリデーションチェック (簡略化)
         if (!preg_match('/^[0-9*#]*$/', $outbound_prefix)) {
             $message = '保存失敗: プレフィクスには数字、*、# のみ使用できます。';
             $message_type = 'error';
@@ -67,6 +68,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 } else {
                     // 「なし」または空の場合は削除
                     AbspFunctions\del_db_item('ABS/CTI', 'POS');
+                }
+                // --- CID参照方法設定の保存処理 ---
+                $abs_cidname_ref = $_POST['abs_cidname_ref'] ?? '';
+                if ($abs_cidname_ref === 'SCRM') {
+                    // 値がある場合は保存
+                    AbspFunctions\put_db_item('ABS/CTI', 'CIDREF', $abs_cidname_ref);
+                } else {
+                    // 「なし」または空の場合は削除
+                    AbspFunctions\del_db_item('ABS/CTI', 'CIDREF');
                 }
             }
             
@@ -164,10 +174,11 @@ $current_prefix = $userDb->getSystemSetting('outbound_prefix', '');
 $current_cti_token = $userDb->getSystemSetting('cti_token', '');
 $current_ws_port = $userDb->getSystemSetting('ws_port', '');
 
-// ABS通知設定の現在値取得
+// ABS通知とCIDname参照設定の現在値取得
 $current_abs_pos = ''; // デフォルトは空（なし）
 if (defined('USE_ABS') && USE_ABS) {
     $current_abs_pos = AbspFunctions\get_db_item('ABS/CTI', 'POS');
+    $current_cidname_ref = AbspFunctions\get_db_item('ABS/CTI', 'CIDREF');
 }
 
 ?>
@@ -237,6 +248,18 @@ if (defined('USE_ABS') && USE_ABS) {
                     </span>
                 </div>
             </div>
+	    <div class="crm-grid-row" style="margin-top: 20px;">
+		<div class="crm-label-group">
+		    <label for="abs_">ABS CIDname参照方法:</label>
+		    <select name="abs_cidname_ref" id="abs_cidname_ref" class="input-middle">
+			<option value="" <?= $current_cidname_ref === '' ? 'selected' : '' ?>>AstDB参照</option>
+			<option value="SCRM" <?= $current_cidname_ref === 'SCRM' ? 'selected' : '' ?>>簡単CRM参照</option>
+		    </select>
+		    <span style="font-size: 0.8em; color: var(--secondary-text-color);">
+			電話機への通知用CIDnameの参照方法を設定します。
+		    </span>
+		</div>
+	    </div>
         <?php endif; ?>
 
     </div>

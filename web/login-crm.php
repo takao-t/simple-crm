@@ -5,7 +5,9 @@ define('CRM_SYSTEM_INCLUDED', true);
 require_once 'php/config.php';
 require_once 'php/CrmUserDbDriver.php';
 
-$userDb = new CrmUserDbDriver();
+//$userDb = new CrmUserDbDriver();
+$userDb = CrmUserDbDriver::createInstance();
+
 $error_message = '';
 
 // 1. ユーザーが一人もいなければ、初回登録ページへ強制移動

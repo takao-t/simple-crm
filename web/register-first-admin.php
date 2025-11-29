@@ -6,10 +6,11 @@ define('CRM_SYSTEM_INCLUDED', true); //
 require_once 'php/config.php';
 require_once 'php/CrmUserDbDriver.php';
 
-$userDb = new CrmUserDbDriver();
+$db = CrmUserDbDriver::createInstance();
+
 $error_message = '';
 
-// 既にユーザーが存在する場合は、このページへのアクセスを拒否
+// 重要: 既にユーザーが存在する場合は、このページへのアクセスを拒否
 if ($userDb->countUsers() > 0) {
     header('Location: login-crm.php');
     exit;
