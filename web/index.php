@@ -1,4 +1,7 @@
 <?php
+
+require_once 'php/config_session.php';
+
 // 60分 (3600秒) にセッションタイムアウトを延長
 ini_set('session.gc_maxlifetime', 3600);
 ini_set('session.cookie_lifetime', 3600);

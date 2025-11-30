@@ -1,4 +1,6 @@
 <?php
+require_once 'php/config_session.php';
+
 session_start();
 
 // セッション変数をすべて解除

@@ -1,5 +1,7 @@
 <?php
-// 直接アクセスの禁止 (セキュリティ上の理由から、exportファイルにも何らかの認証機構を設けるべきですが、ここでは認証チェックを維持)
+
+require_once 'config_session.php';
+
 // session_start() はそのまま維持
 set_time_limit(0);
 ini_set('memory_limit', '512M'); 
@@ -14,7 +16,7 @@ require_once 'config.php';
 require_once '../php/CrmDbDriver.php';
 
 // CrmDbDriver の getAllCustomersForExport() メソッドが利用可能であることを前提とする
-$crm = new CrmDbDriver();
+$crm = CrmDbDriver::createInstance();
 
 // --- 1. ヘッダー設定: CSVファイルとしてダウンロードさせる ---
 $filename = 'crm_customer_data_' . date('YmdHis') . '.csv';

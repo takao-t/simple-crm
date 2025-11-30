@@ -1,4 +1,7 @@
 <?php
+
+require_once 'php/config_session.php';
+
 // ※ このファイルは index.php (ゲートキーパー) の外で動かすため、
 //    独自にセッションとDBドライバを読み込む
 session_start();
@@ -6,7 +9,7 @@ define('CRM_SYSTEM_INCLUDED', true); //
 require_once 'php/config.php';
 require_once 'php/CrmUserDbDriver.php';
 
-$userDb = CrmUserDbDriver::createInstance();
+$db = CrmUserDbDriver::createInstance();
 
 $error_message = '';
 

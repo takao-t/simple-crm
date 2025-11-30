@@ -1,4 +1,7 @@
 <?php
+
+require_once 'php/config_session.php';
+
 // ※ ログインページはセッションチェックの「前」に動作する
 session_start();
 define('CRM_SYSTEM_INCLUDED', true);
