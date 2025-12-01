@@ -4,7 +4,7 @@ class ZipCodeDbDriverMaria
 {
     public function __construct()
     {
-        // コンストラクタではテーブル作成を行わず、接続確認のみとする
+        // コンストラクタではテーブル作成を行わず、接続確認のみ
         // (テーブルがない場合の作成は検索時やインポート時に担保、あるいは初回アクセス時)
         $this->ensureTableExists();
     }
@@ -68,7 +68,6 @@ class ZipCodeDbDriverMaria
         $pdo = $this->getDbConnection();
 
         // 1. テーブルの再作成 (DDL)
-        // DDLは暗黙的なコミットを引き起こすため、beginTransactionの前に実行します。
         try {
             $pdo->exec("DROP TABLE IF EXISTS zip_codes");
             $this->createTable($pdo);
@@ -77,7 +76,6 @@ class ZipCodeDbDriverMaria
         }
 
         // 2. データのインポート (DML)
-        // ここからトランザクションを開始して、高速に一括挿入します。
         try {
             $pdo->beginTransaction();
 
