@@ -3,8 +3,10 @@
 require_once 'php/config_session.php';
 
 // 60分 (3600秒) にセッションタイムアウトを延長
-ini_set('session.gc_maxlifetime', 3600);
-ini_set('session.cookie_lifetime', 3600);
+//ini_set('session.gc_maxlifetime', 3600);
+//ini_set('session.cookie_lifetime', 3600);
+ini_set('session.gc_maxlifetime', 60 * 60 * 8);
+ini_set('session.cookie_lifetime', 60 * 60 * 8);
 session_start();
 
 require_once 'php/config.php';
@@ -85,6 +87,7 @@ if (array_key_exists($page, $routes) && file_exists($routes[$page])) {
 <!DOCTYPE html>
 <html lang="ja">
 <head>
+    <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Simple-CRMシステム</title>
