@@ -414,7 +414,7 @@ if ($is_search_request) {
             <thead>
                 <tr>
                     <th>氏名</th>
-                    <th>会社名</th>
+                    <th>社名・所属</th>
                     <th>電話番号</th>
                     <th>住所</th>
                 </tr>
