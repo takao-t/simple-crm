@@ -347,9 +347,15 @@ if ($is_search_request) {
         <div class="crm-grid-row">
             <div class="crm-label-group">
                 <label>*郵便番号</label>
-                <input type="text" name="zip_code" class="input-short2" value="<?= htmlspecialchars($form_data['zip_code']) ?>">
+                <div class="input-with-button">
+                    <input type="text" name="zip_code" class="input-short2" value="<?= htmlspecialchars($form_data['zip_code']) ?>">
+                    <button type="button" id="btn-zip-search" class="btn btn-row" title="住所を検索して自動入力">
+                        住所検索
+                    </button>
+                </div>
             </div>
         </div>
+
         <div class="crm-grid-row">
             <div class="crm-label-group" style="flex-grow: 1; max-width: 600px;">
                 <label>*住所</label>
@@ -574,5 +580,58 @@ document.addEventListener('DOMContentLoaded', function() {
         form.action = 'index.php?page=crm-page';
     }
 
+    // --- 6. 郵便番号検索 (Ajax) ---
+    const btnZipSearch = document.getElementById('btn-zip-search');
+    if (btnZipSearch) {
+        btnZipSearch.addEventListener('click', function() {
+            const zipInput = document.querySelector('input[name="zip_code"]');
+            const addressInput = document.querySelector('input[name="address"]');
+            const addressKanaInput = document.querySelector('input[name="address_kana"]');
+            const zipVal = zipInput.value;
+
+            if (!zipVal) {
+                alert('郵便番号を入力してください。');
+                return;
+            }
+
+            // ボタンを一時的に無効化（連打防止）
+            btnZipSearch.disabled = true;
+            btnZipSearch.textContent = '検索中...';
+
+            fetch('ajax-zip-search.php?zip=' + encodeURIComponent(zipVal))
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    if (data && data.length > 0) {
+                        // 最初の候補を使用
+                        const item = data[0];
+                        
+                        // 住所連結（スペースなし）
+                        const fullAddress = item.pref + item.city + item.town;
+                        const fullKana = item.pref_kana + item.city_kana + item.town_kana;
+
+                        // 値をセット
+                        if (addressInput) addressInput.value = fullAddress;
+                        if (addressKanaInput) addressKanaInput.value = fullKana;
+
+                    } else {
+                        alert('該当する住所が見つかりませんでした。');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('検索中にエラーが発生しました。');
+                })
+                .finally(() => {
+                    // ボタンの状態を戻す
+                    btnZipSearch.disabled = false;
+                    btnZipSearch.textContent = '住所検索';
+                });
+        });
+    }
 });
 </script>
