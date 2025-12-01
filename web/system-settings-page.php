@@ -32,6 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $outbound_prefix = $_POST['outbound_prefix'] ?? '';
         $cti_token = $_POST['cti_token'] ?? '';
         $ws_port = $_POST['ws_port'] ?? ''; 
+        $trigger_port = $_POST['trigger_port'] ?? ''; 
 
         $valid = true;
         
@@ -54,11 +55,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userDb->saveSystemSetting('outbound_prefix', $outbound_prefix);
             $userDb->saveSystemSetting('cti_token', $cti_token);
             $userDb->saveSystemSetting('ws_port', $ws_port);
+            $userDb->saveSystemSetting('trigger_port', $trigger_port);
             
             //トークンとポートはAstDBにも保存 (USE_ABSはconfig.phpで設定)
             if (defined('USE_ABS') && USE_ABS) {
                 AbspFunctions\put_db_item('ABS/CTI', 'TOKEN', $cti_token);
                 AbspFunctions\put_db_item('ABS/CTI', 'PORT', $ws_port);
+                AbspFunctions\put_db_item('ABS/CTI', 'TPORT', $trigger_port);
 
                 // --- ABS通知設定の保存処理 ---
                 $abs_notification_pos = $_POST['abs_notification_pos'] ?? '';
@@ -173,6 +176,7 @@ if (empty($message) && isset($_GET['import_result'])) {
 $current_prefix = $userDb->getSystemSetting('outbound_prefix', '');
 $current_cti_token = $userDb->getSystemSetting('cti_token', '');
 $current_ws_port = $userDb->getSystemSetting('ws_port', '');
+$current_trigger_port = $userDb->getSystemSetting('trigger_port', '');
 
 // ABS通知とCIDname参照設定の現在値取得
 $current_abs_pos = ''; // デフォルトは空（なし）
@@ -227,6 +231,10 @@ if (defined('USE_ABS') && USE_ABS) {
                 <label for="ws_port">WebSocketポート:</label>
                 <input type="number" name="ws_port" id="ws_port" class="input-xmiddle"
                        value="<?= htmlspecialchars($current_ws_port) ?>"
+                       min="1" max="65535" required>
+                <label for="trigger_port">トリガーポート:</label>
+                <input type="number" name="trigger_port" id="trigger_port" class="input-xmiddle"
+                       value="<?= htmlspecialchars($current_trigger_port) ?>"
                        min="1" max="65535" required>
                 <span style="font-size: 0.8em; color: var(--secondary-text-color);">
                     ※ Goサーバーの起動ポートと一致させてください。

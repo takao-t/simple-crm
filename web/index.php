@@ -41,8 +41,15 @@ if (strpos($ws_host, ':') !== false) {
     $ws_host = substr($ws_host, 0, strpos($ws_host, ':'));
 }
 
+// Websocket接続にSSLを使うかどうかを自動判定
+// 自動判定に問題がある場合には手動でwsかwssを設定すること
+$ws_protocol = (empty($_SERVER['HTTPS']) ? 'ws://' : 'wss://');
+
 // WebSocketのURL全体を構築
-$WS_URL = "ws://{$ws_host}:" . $WS_PORT . "/crmws";
+// $WS_URL = "ws://{$ws_host}:" . $WS_PORT . "/crmws";
+$WS_URL = $ws_protocol . "{$ws_host}:" . $WS_PORT . "/crmws";
+//デバッグ表示
+//echo $WS_URL;
 
 // 1. DBにユーザーが一人もいなければ、初回登録ページへ
 if ($userDb->countUsers() === 0) {
