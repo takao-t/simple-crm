@@ -9,7 +9,7 @@ define('CRM_SYSTEM_INCLUDED', true); //
 require_once 'php/config.php';
 require_once 'php/CrmUserDbDriver.php';
 
-$db = CrmUserDbDriver::createInstance();
+$userDb = CrmUserDbDriver::createInstance();
 
 $error_message = '';
 
