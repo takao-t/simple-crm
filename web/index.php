@@ -1,12 +1,8 @@
 <?php
 
+// セッション関連設定は外部
 require_once 'php/config_session.php';
 
-// 60分 (3600秒) にセッションタイムアウトを延長
-//ini_set('session.gc_maxlifetime', 3600);
-//ini_set('session.cookie_lifetime', 3600);
-ini_set('session.gc_maxlifetime', 60 * 60 * 8);
-ini_set('session.cookie_lifetime', 60 * 60 * 8);
 session_start();
 
 require_once 'php/config.php';
@@ -26,6 +22,10 @@ if(USE_ABS){
     require_once 'php/astman.php';
     require_once 'php/functions.php';
 }
+
+// デバッグ用
+// echo 'GC Max Lifetime: ' . ini_get('session.gc_maxlifetime') . '<br>';
+// echo 'Cookie Lifetime: ' . ini_get('session.cookie_lifetime');
 
 require_once 'php/CrmUserDbDriver.php';
 $userDb = CrmUserDbDriver::createInstance();
