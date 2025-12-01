@@ -1,6 +1,8 @@
 document.addEventListener('DOMContentLoaded', function() {
 
-    const WS_SERVER_HOST = 'ws://192.168.100.1:8989/crmws'
+    const WS_SERVER_HOST = 'ws://192.168.100.1:8990/crmws'
+    // SSLを使う場合にはwssを指定する
+    // const WS_SERVER_HOST = 'wss://192.168.100.1:8990/crmws'
     // 自内線番号
     const MY_EXTEN = '2001';
     console.log('自内線番号', MY_EXTEN);

@@ -2,19 +2,21 @@ package main
 
 import (
 	"bufio"
-	"fmt"
+	"encoding/json"
 	"flag"
+	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strings"
 	"sync"
 	"time"
-	"encoding/json"
-	"net"
 
 	"github.com/gorilla/websocket"
 )
+
+// --- 構造体定義 ---
 
 // AclEntry: 個別IPまたはCIDRを表す構造体
 type AclEntry struct {
@@ -24,20 +26,53 @@ type AclEntry struct {
 
 // Config: サーバー設定を保持する構造体
 type Config struct {
-	Port        string
+	HttpPort    string // トリガー用ポート (HTTP)
+	ClientPort  string // クライアント用ポート (WS/WSS)
+	UseSSL      bool   // SSLを使用するかどうか
+	CertFile    string // 証明書ファイルパス
+	KeyFile     string // 鍵ファイルパス
 	SecretToken string
+
 	// ACL設定 (パース前の文字列)
 	TriggerAllowStr string
 	CrmWsAllowStr   string
 	// ACL設定 (パース済み)
 	TriggerACL []AclEntry // /api/trigger 用のACL
-	CrmWsACL   []AclEntry   // /crmws 用のACL
+	CrmWsACL   []AclEntry // /crmws 用のACL
 }
+
+// Client: 個別のWebSocket接続を表す
+type Client struct {
+	hub  *Hub
+	conn *websocket.Conn
+	send chan []byte
+}
+
+// Hub: 接続されているクライアントとメッセージのブロードキャストを管理
+type Hub struct {
+	clients    sync.Map // map[*Client]bool
+	broadcast  chan []byte
+	register   chan *Client
+	unregister chan *Client
+}
+
+// --- 定数 ---
+
+const (
+	writeWait = 10 * time.Second
+)
+
+var upgrader = websocket.Upgrader{
+	CheckOrigin: func(r *http.Request) bool {
+		return true
+	},
+}
+
+// --- ACL関連関数 ---
 
 // parseACL: コンマ区切りの文字列からACLエントリーのリストを作成
 func parseACL(allowListStr string) ([]AclEntry, error) {
 	if allowListStr == "" {
-		// 設定がない場合は空のリストを返す (ハンドラーで全拒否として扱われる)
 		return []AclEntry{}, nil
 	}
 
@@ -60,7 +95,6 @@ func parseACL(allowListStr string) ([]AclEntry, error) {
 		// 2. 個別IP形式のパースを試みる
 		ip := net.ParseIP(ipStr)
 		if ip != nil {
-			// IPv4アドレスの場合はIPv4として扱う
 			if v4 := ip.To4(); v4 != nil {
 				entries = append(entries, AclEntry{IP: v4})
 			} else {
@@ -75,7 +109,48 @@ func parseACL(allowListStr string) ([]AclEntry, error) {
 	return entries, nil
 }
 
-// loadConfig: 設定ファイルを読み込む (key=value形式)
+// getRemoteIP: リクエスト元のIPアドレスを取得
+func getRemoteIP(r *http.Request) net.IP {
+	host, _, err := net.SplitHostPort(r.RemoteAddr)
+	if err != nil {
+		return nil
+	}
+	ip := net.ParseIP(host)
+	if v4 := ip.To4(); v4 != nil {
+		return v4
+	}
+	return ip
+}
+
+// checkACL: リクエスト元のIPがACLリストに含まれているか確認
+func checkACL(r *http.Request, acl []AclEntry) bool {
+	remoteIP := getRemoteIP(r)
+	if remoteIP == nil {
+		log.Printf("ACL Check: Failed to parse remote IP from %s", r.RemoteAddr)
+		return false
+	}
+	remoteIPStr := remoteIP.String()
+
+	if len(acl) == 0 {
+		log.Printf("ACL Denied (Default: Deny All): %s", remoteIPStr)
+		return false
+	}
+
+	for _, entry := range acl {
+		if entry.IPNet != nil && entry.IPNet.Contains(remoteIP) {
+			return true
+		}
+		if entry.IP != nil && entry.IP.Equal(remoteIP) {
+			return true
+		}
+	}
+
+	log.Printf("ACL Denied: %s is not in the allowed list.", remoteIPStr)
+	return false
+}
+
+// --- 設定読み込み ---
+
 func loadConfig(path string) (*Config, error) {
 	file, err := os.Open(path)
 	if err != nil {
@@ -84,7 +159,9 @@ func loadConfig(path string) (*Config, error) {
 	defer file.Close()
 
 	config := &Config{
-		Port: "8080", // デフォルト値を設定
+		HttpPort:   "8989", // デフォルト値
+		ClientPort: "8990", // デフォルト値
+		UseSSL:     false,
 	}
 
 	scanner := bufio.NewScanner(file)
@@ -99,11 +176,23 @@ func loadConfig(path string) (*Config, error) {
 			key := strings.TrimSpace(parts[0])
 			val := strings.TrimSpace(parts[1])
 			switch key {
-			case "PORT":
-				config.Port = val
+			case "HTTP_PORT", "PORT": // 互換性のためにPORTも残す
+				config.HttpPort = val
+			case "CLIENT_PORT", "WSS_PORT":
+				config.ClientPort = val
+			case "USE_SSL":
+				valLower := strings.ToLower(val)
+				if valLower == "true" || valLower == "1" || valLower == "yes" {
+					config.UseSSL = true
+				} else {
+					config.UseSSL = false
+				}
+			case "CERT_FILE":
+				config.CertFile = val
+			case "KEY_FILE":
+				config.KeyFile = val
 			case "SECRET_TOKEN":
 				config.SecretToken = val
-			// ACL設定の追加
 			case "TRIGGER_ALLOW":
 				config.TriggerAllowStr = val
 			case "CRMWS_ALLOW":
@@ -111,304 +200,246 @@ func loadConfig(path string) (*Config, error) {
 			}
 		}
 	}
-    
+
 	if config.SecretToken == "" {
 		return nil, fmt.Errorf("SECRET_TOKEN is missing in config file %s", path)
 	}
 
-	// ACLのパース
 	config.TriggerACL, err = parseACL(config.TriggerAllowStr)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse TRIGGER_ALLOW: %w", err)
 	}
 	config.CrmWsACL, err = parseACL(config.CrmWsAllowStr)
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse CRMWs_ALLOW: %w", err)
+		return nil, fmt.Errorf("failed to parse CRMWS_ALLOW: %w", err)
 	}
 
 	return config, nil
 }
 
-// --- ACLチェックヘルパー ---
-
-// getRemoteIP: リクエスト元のIPアドレスを取得 (RemoteAddrからホスト部をパース)
-func getRemoteIP(r *http.Request) net.IP {
-	host, _, err := net.SplitHostPort(r.RemoteAddr)
-	if err != nil {
-		return nil
-	}
-	ip := net.ParseIP(host)
-    // IPv4にマップされたIPv6アドレスをIPv4アドレスとして返す
-    if v4 := ip.To4(); v4 != nil {
-        return v4
-    }
-	return ip
-}
-
-// checkACL: リクエスト元のIPがACLリストに含まれているか確認
-// ACLが空の場合 (設定がない場合) は「全拒否」(false)
-func checkACL(r *http.Request, acl []AclEntry) bool {
-	remoteIP := getRemoteIP(r)
-
-	// IPが取得できない場合は拒否
-	if remoteIP == nil {
-		log.Printf("ACL Check: Failed to parse remote IP from %s", r.RemoteAddr)
-		return false
-	}
-    
-	remoteIPStr := remoteIP.String()
-
-	// ACLが空の場合は「全拒否」のルールを適用
-	if len(acl) == 0 {
-		log.Printf("ACL Denied (Default: Deny All): %s", remoteIPStr)
-		return false
-	}
-
-	for _, entry := range acl {
-		// CIDRチェック (例: 192.168.0.0/16 に含まれるか)
-		if entry.IPNet != nil && entry.IPNet.Contains(remoteIP) {
-			return true 
-		}
-		// 個別IPチェック (例: 127.0.0.1 と一致するか)
-		if entry.IP != nil && entry.IP.Equal(remoteIP) {
-			return true 
-		}
-	}
-
-	log.Printf("ACL Denied: %s is not in the allowed list.", remoteIPStr)
-	return false
-}
-
-// --- Hub/Client の定義 ---
-
-// Hub: 接続されているクライアントとメッセージのブロードキャストを管理
-type Hub struct {
-    clients      sync.Map // map[*Client]bool
-    broadcast    chan []byte
-    register     chan *Client
-    unregister   chan *Client
-}
+// --- Hub/Client ロジック ---
 
 func newHub() *Hub {
-    return &Hub{
-        broadcast:  make(chan []byte),
-        register:   make(chan *Client),
-        unregister: make(chan *Client),
-    }
+	return &Hub{
+		broadcast:  make(chan []byte),
+		register:   make(chan *Client),
+		unregister: make(chan *Client),
+	}
 }
 
 func (h *Hub) run() {
-    for {
-        select {
-        case client := <-h.register:
-            h.clients.Store(client, true)
-            log.Printf("Client registered: %p. Total clients: %d", client, h.clientCount())
-        
-        case client := <-h.unregister:
-            h.clients.Delete(client)
-            close(client.send)
-            log.Printf("Client unregistered: %p. Total clients: %d", client, h.clientCount())
+	for {
+		select {
+		case client := <-h.register:
+			h.clients.Store(client, true)
+			log.Printf("Client registered: %p. Total clients: %d", client, h.clientCount())
 
-        case message := <-h.broadcast:
-            h.clients.Range(func(key, value interface{}) bool {
-                client := key.(*Client)
-                select {
-                case client.send <- message:
-                default:
-                    h.unregister <- client
-                }
-                return true
-            })
-        }
-    }
+		case client := <-h.unregister:
+			if _, ok := h.clients.Load(client); ok {
+				h.clients.Delete(client)
+				close(client.send)
+				log.Printf("Client unregistered: %p. Total clients: %d", client, h.clientCount())
+			}
+
+		case message := <-h.broadcast:
+			h.clients.Range(func(key, value interface{}) bool {
+				client := key.(*Client)
+				select {
+				case client.send <- message:
+				default:
+					h.unregister <- client
+				}
+				return true
+			})
+		}
+	}
 }
 
 func (h *Hub) clientCount() int {
-    count := 0
-    h.clients.Range(func(_, _ interface{}) bool {
-        count++
-        return true
-    })
-    return count
+	count := 0
+	h.clients.Range(func(_, _ interface{}) bool {
+		count++
+		return true
+	})
+	return count
 }
-
-// Client: 個別のWebSocket接続を表す
-type Client struct {
-    hub  *Hub
-    conn *websocket.Conn
-    send chan []byte
-}
-
-const (
-    writeWait = 10 * time.Second
-)
 
 func (c *Client) writePump() {
-    defer func() {
-        c.hub.unregister <- c
-        c.conn.Close()
-    }()
-    
-    for {
-        select {
-        case message, ok := <-c.send:
-            c.conn.SetWriteDeadline(time.Now().Add(writeWait))
-            if !ok {
-                c.conn.WriteMessage(websocket.CloseMessage, []byte{})
-                return
-            }
+	defer func() {
+		c.hub.unregister <- c
+		c.conn.Close()
+	}()
 
-            w, err := c.conn.NextWriter(websocket.TextMessage)
-            if err != nil {
-                return
-            }
-            w.Write(message)
+	for {
+		select {
+		case message, ok := <-c.send:
+			c.conn.SetWriteDeadline(time.Now().Add(writeWait))
+			if !ok {
+				c.conn.WriteMessage(websocket.CloseMessage, []byte{})
+				return
+			}
 
-            if err := w.Close(); err != nil {
-                return
-            }
-        }
-    }
+			w, err := c.conn.NextWriter(websocket.TextMessage)
+			if err != nil {
+				return
+			}
+			w.Write(message)
+
+			if err := w.Close(); err != nil {
+				return
+			}
+		}
+	}
 }
 
 // --- ハンドラー ---
 
-var upgrader = websocket.Upgrader{
-    CheckOrigin: func(r *http.Request) bool {
-        return true
-    },
-}
-
 // serveWs: WebSocket接続を処理するハンドラー
 func serveWs(hub *Hub, config *Config, w http.ResponseWriter, r *http.Request) {
-    // --- ACLチェック ---
 	if !checkACL(r, config.CrmWsACL) {
 		http.Error(w, "Forbidden (ACL)", http.StatusForbidden)
 		return
 	}
-    // -------------------
-    
-    conn, err := upgrader.Upgrade(w, r, nil)
-    if err != nil {
-        log.Println("Upgrade error:", err)
-        return
-    }
-    client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
-    
-    client.hub.register <- client
 
-    go client.writePump()
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Println("Upgrade error:", err)
+		return
+	}
+	client := &Client{hub: hub, conn: conn, send: make(chan []byte, 256)}
+
+	client.hub.register <- client
+
+	go client.writePump()
 }
 
 // triggerHandler: Asteriskからの着信通知を受け取る
 func triggerHandler(hub *Hub, config *Config, w http.ResponseWriter, r *http.Request) {
-    if r.Method != http.MethodPost {
-        http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
-        return
-    }
-    
-    // --- ACLチェック ---
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
 	if !checkACL(r, config.TriggerACL) {
 		http.Error(w, "Forbidden (ACL)", http.StatusForbidden)
 		return
 	}
-    // -------------------
 
-    // 1. トークン認証
-    token := r.URL.Query().Get("token")
-    if token != config.SecretToken { // Configからトークンを比較
-        log.Printf("Auth failed: Invalid token '%s'", token)
-        http.Error(w, "Unauthorized", http.StatusUnauthorized)
-        return
-    }
+	token := r.URL.Query().Get("token")
+	if token != config.SecretToken {
+		log.Printf("Auth failed: Invalid token '%s'", token)
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
 
-    // 2.1 パラメータ取得 (phone=...)
-    phone := r.URL.Query().Get("phone")
-    if phone == "" {
-        http.Error(w, "Bad Request: 'phone' parameter is missing", http.StatusBadRequest)
-        return
-    }
+	phone := r.URL.Query().Get("phone")
+	if phone == "" {
+		http.Error(w, "Bad Request: 'phone' parameter is missing", http.StatusBadRequest)
+		return
+	}
+	exten := r.URL.Query().Get("exten")
 
-    // 2.2 パラメータ取得(exten=...)
-    exten := r.URL.Query().Get("exten")
+	data := struct {
+		Type string `json:"type"`
+		Data struct {
+			Phone string `json:"phone"`
+			Exten string `json:"exten"`
+		} `json:"data"`
+	}{
+		Type: "CALL_IN",
+		Data: struct {
+			Phone string `json:"phone"`
+			Exten string `json:"exten"`
+		}{
+			Phone: phone,
+			Exten: exten,
+		},
+	}
 
-    // 3. JSONメッセージの作成
+	message, err := json.Marshal(data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
 
-    data := struct {
-        Type string `json:"type"`
-        Data struct {
-            Phone string `json:"phone"`
-            Exten string `json:"exten"`
-        } `json:"data"`
-    }{
-        Type: "CALL_IN",
-        Data: struct {
-            Phone string `json:"phone"`
-            Exten string `json:"exten"`
-        }{
-            Phone: phone,
-            Exten: exten,
-        },
-    }
+	hub.broadcast <- message
 
-    // JSONバイト列に変換
-    message, err := json.Marshal(data)
-    if err != nil {
-        http.Error(w, err.Error(), http.StatusInternalServerError)
-        return
-    }
-    
-    // 4. メッセージをハブのブロードキャストチャネルへ送る
-    hub.broadcast <- message
-    
-    log.Printf("Trigger received: Phone=%s. Broadcasted to %d clients.", phone, hub.clientCount())
+	log.Printf("Trigger received: Phone=%s. Broadcasted to %d clients.", phone, hub.clientCount())
 
-    w.WriteHeader(http.StatusOK)
-    w.Write([]byte("OK"))
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("OK"))
 }
 
 // --- Main関数 ---
 
 func main() {
-    log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
-    
-    // 1. 設定の読み込み
-    // デフォルト値としてパスを設定
-    configFilePath := flag.String("config", "/usr/local/etc/popup-notifier.conf", "Path to the configuration file.")
+	log.SetFlags(log.Ldate | log.Ltime | log.Lshortfile)
 
-    // 2. コマンドライン引数をパース
-    flag.Parse()
+	configFilePath := flag.String("config", "/usr/local/etc/popup-notifier.conf", "Path to the configuration file.")
+	flag.Parse()
 
-    // 3. 設定の読み込みに、パースされたパスを使用
-    config, err := loadConfig(*configFilePath)
-    if err != nil {
-        // 設定ファイルが見つからない、または形式が不正な場合は致命的エラー
-        log.Fatalf("Configuration error: %v", err)
-    }
+	config, err := loadConfig(*configFilePath)
+	if err != nil {
+		log.Fatalf("Configuration error: %v", err)
+	}
 
-    log.Printf("Starting CTI WebSocket Server on :%s...", config.Port)
-    log.Printf("Loaded SECRET_TOKEN: %s", config.SecretToken)
-    log.Printf("TRIGGER_ALLOW: %s (Parsed: %d entries)", config.TriggerAllowStr, len(config.TriggerACL))
-    log.Printf("CRMWS_ALLOW: %s (Parsed: %d entries)", config.CrmWsAllowStr, len(config.CrmWsACL))
+	log.Printf("Starting CTI Server...")
+	log.Printf("- HTTP Trigger Listener: :%s", config.HttpPort)
 
-    // 3. Hubのインスタンス化と実行
-    hub := newHub()
-    go hub.run()
-    
-    // 4. ルーティング設定
-    // serveWsにconfigを渡すように修正
-    http.HandleFunc("/crmws", func(w http.ResponseWriter, r *http.Request) {
-        serveWs(hub, config, w, r) 
-    })
-    
-    // 設定を渡すためにクロージャを使用
-    http.HandleFunc("/api/trigger", func(w http.ResponseWriter, r *http.Request) {
-        triggerHandler(hub, config, w, r)
-    })
+	protocol := "WS"
+	if config.UseSSL {
+		protocol = "WSS"
+	}
+	log.Printf("- WebSocket Client Listener (%s): :%s", protocol, config.ClientPort)
+	log.Printf("- Loaded SECRET_TOKEN: %s", config.SecretToken)
+	log.Printf("- TRIGGER_ALLOW: %s (Parsed: %d entries)", config.TriggerAllowStr, len(config.TriggerACL))
+	log.Printf("- CRMWS_ALLOW: %s (Parsed: %d entries)", config.CrmWsAllowStr, len(config.CrmWsACL))
 
-    // 5. 指定ポートででサーバーを起動
-    err = http.ListenAndServe(":"+config.Port, nil)
-    if err != nil {
-        log.Fatal("ListenAndServe failed: ", err)
-    }
+	hub := newHub()
+	go hub.run()
+
+	// ---------------------------------------------------------
+	// 1. HTTPサーバー (トリガー用) の起動 - Goroutine
+	// ---------------------------------------------------------
+	httpMux := http.NewServeMux()
+	httpMux.HandleFunc("/api/trigger", func(w http.ResponseWriter, r *http.Request) {
+		triggerHandler(hub, config, w, r)
+	})
+
+	go func() {
+		// トリガー用は常にHTTPで起動
+		err := http.ListenAndServe(":"+config.HttpPort, httpMux)
+		if err != nil {
+			log.Fatalf("HTTP Trigger Server failed: %v", err)
+		}
+	}()
+
+	// ---------------------------------------------------------
+	// 2. クライアント用サーバー (設定によりWS/WSS) の起動 - Main Thread
+	// ---------------------------------------------------------
+	clientMux := http.NewServeMux()
+	clientMux.HandleFunc("/crmws", func(w http.ResponseWriter, r *http.Request) {
+		serveWs(hub, config, w, r)
+	})
+
+	addr := ":" + config.ClientPort
+	if config.UseSSL {
+		// 証明書ファイルの存在チェック
+		if _, err := os.Stat(config.CertFile); os.IsNotExist(err) {
+			log.Fatalf("Error: USE_SSL is true but CERT_FILE not found: %s", config.CertFile)
+		}
+		if _, err := os.Stat(config.KeyFile); os.IsNotExist(err) {
+			log.Fatalf("Error: USE_SSL is true but KEY_FILE not found: %s", config.KeyFile)
+		}
+
+		log.Printf("Listening for Secure WebSocket (WSS) on %s", addr)
+		err = http.ListenAndServeTLS(addr, config.CertFile, config.KeyFile, clientMux)
+	} else {
+		log.Printf("Listening for WebSocket (WS) on %s", addr)
+		err = http.ListenAndServe(addr, clientMux)
+	}
+
+	if err != nil {
+		log.Fatal("Client Server failed: ", err)
+	}
 }
