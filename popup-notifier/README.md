@@ -17,14 +17,23 @@
 サンプル設定ファイルは次のようになっています。
 
 ```
-# listenするポート番号。デフォルトは8080。
-PORT=8989
+# --- クライアント接続用 (WebSocket) ---
+# SSLを使用するかどうか (true / false)
+USE_SSL=false
 
-# triggerを使用する際のtoken
+# クライアントが接続するポート(ws/wss用)
+CLIENT_PORT=8990
+
+# SSL証明書 (USE_SSL=true の場合のみ必要)
+# SSL使用時の証明書はapache(https)とあわせること
+CERT_FILE=/usr/local/ssl/cert.pem
+KEY_FILE=/usr/local/ssl/key.pem
+
+# --- トリガー用 (PBX連携・ローカル) ---
+HTTP_PORT=8989
+
+# --- 共通設定 ---
 SECRET_TOKEN=mytoken
-
-#ACL設定。デフォルト挙動は全てdenyなので注意。
-#ACLを設定しないとどこからも接続できない。
 
 # /api/trigger の許可リスト
 # 複数のIP/CIDRをカンマ区切りで
@@ -42,9 +51,13 @@ CRMWS_ALLOW=127.0.0.1,192.168.0.0/16
 
  /crmws       - ブラウザからWebSocketで接続するポイントです。
 
+それぞれのエンドポイントは別なポート番号を設定します。Websocket用がCLIENT_PORTで、トリガーポイントがHTTP_PORTです。WebsocketはSSL(wss://)に対応します。トリガーポイントは通常、ローカルで使用するためSSLには対応していません。
+
  ブラウザからの接続はJavaScript等でWebSocket接続します。通知はブロードキャスト(接続しているブラウザ全て)に対して行われ、JSON形式でphoneとextenが通知されます。phoneは着信した番号、extenは応答した内線番号です。ただし、これら情報はPBXから取得する必要があるので、トリガー時に指定します。先述のようにブロードキャスト通知なので大規模なCRMには向きませんので注意してください。
  いずれのエンドポイントもACLを設けています。ACLが設定されていない場合には全拒否です。このデーモンとPBXを同じサーバで動作させている場合、トリガーは127.0.0.1にだけ許可すれば良いのですが、WebSocketはネットワーク上から接続してきますから、使用するネットワークアドレスを設定してください。
  SECRET_TOKENはトリガー時に使用するトークンです。
+
+SSL(wss://)を使用する場合にはCRM等、ブラウザが使用するものと同じ証明書を使ってください。CRMのページがSSL対応していない場合にはpopup-notifierも非SSLで動かしてください。通常、ブラウザはhttpとwss、あるいはhttpsとwsの組み合わせでは動作しません。
 
 
 4. 起動/終了
