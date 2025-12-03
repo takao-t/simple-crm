@@ -13,6 +13,12 @@ $userDb = CrmUserDbDriver::createInstance();
 
 $error_message = '';
 
+// 0, DBの存在チェック(ディレクトリ作成失敗を含む)
+if ($userDb->countUsers() === -1) {
+    echo('管理用データベースの設定に誤りがあります<br>');
+    exit;
+}
+
 // 1. ユーザーが一人もいなければ、初回登録ページへ強制移動
 if ($userDb->countUsers() === 0) {
     header('Location: register-first-admin.php');
