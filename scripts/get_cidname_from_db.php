@@ -37,7 +37,9 @@ if (!empty($phone_query) && !preg_match('/^[0-9*#-]+$/', $phone_query)) {
         $result = $customer['organization'] . ':' .$customer['last_name'] . $customer['first_name'];
     } else {
         // 結果がない場合にはCID名として'未登録'とする
-        $result = '未登録';
+        //$result = '未登録';
+        // 結果がない場合にはCID(番号)を返す
+        $result = $phone_query;
     }
 }
 
