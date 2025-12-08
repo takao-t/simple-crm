@@ -78,6 +78,7 @@ $page = $_GET['page'] ?? 'crm-page';
 $routes = [
     'crm-page' => 'crm-page.php',
     'list-page' => 'list-page.php',
+    'call-history-page' => 'call-history-page.php',
     'user-manage-page' => 'user-manage-page.php',
     'system-settings-page' => 'system-settings-page.php',
 ];
@@ -135,6 +136,14 @@ if (array_key_exists($page, $routes) && file_exists($routes[$page])) {
                         📜 一覧表示
                     </a>
                 </li>
+
+                <?php if (defined('USE_ABS') && USE_ABS): ?>
+                <li>
+                    <a href="index.php?page=call-history-page" class="<?= ($page === 'call-history-page') ? 'active' : '' ?>">
+                        📞 着信履歴
+                    </a>
+                </li>
+                <?php endif; ?>
                 
             </ul>
 

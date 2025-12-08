@@ -9,6 +9,7 @@
 //define('USER_DB_PATH', __DIR__ . '/../db/crm_user_db.sqlite3');
 define('USER_DB_PATH', '/var/lib/simple_crm/crm_user_db.sqlite3');
 // CRM顧客用データベースのパス
+//  郵便番号DBも同じパスを使用する
 //define('CRM_DB_PATH', __DIR__ . '/../db/crm_db.sqlite3');
 define('CRM_DB_PATH', '/var/lib/simple_crm/crm_db.sqlite3');
 
@@ -27,3 +28,7 @@ define('MAX_CTI_TABS', 4);
 // PBXにABSを使用する場合にはtrueを設定、使用しない場合にはfalse
 //
 define('USE_ABS', true);
+
+// --- ABSログ設定 ---
+// ABSの着信ログデータベースのパス (USE_ABS = true の場合のみ使用)
+define('ABS_LOG_PATH', '/var/log/asterisk/abslog.sqlite3');
