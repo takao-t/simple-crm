@@ -10,7 +10,13 @@ if (!defined('USE_ABS') || !USE_ABS) {
     return;
 }
 
+// このページ専用のDBドライバ
+// ABSの着信ログを参照する専用
 require_once 'php/AbsLogDbDriver.php';
+
+// CRM参照用ドライバとクラス
+require_once 'php/CrmDbDriver.php';
+$crm = CrmDbDriver::createInstance();
 
 // 1ページあたりの表示件数
 define('HISTORY_ROWS_PER_PAGE', 20);
@@ -30,6 +36,25 @@ if ($current_page > $total_pages && $total_pages > 0) {
 
 // データ取得
 $history_rows = $absDb->getHistoryPaginated($current_page, HISTORY_ROWS_PER_PAGE);
+
+// 番号から名前を取得
+// 負荷の大きいシステムではこの処理を無効にすると良いかも
+$count = 0;
+foreach($history_rows as $row){
+    // CRM DBから登録有無を取得
+    $customer = $crm->getCustomerByPhone($row['NUMBER']);
+    // 登録があればCIDNAMEを組み立て
+    if($customer){
+        $cidname = $customer['organization'] . ':' .$customer['last_name'] . $customer['first_name'];
+    }
+    else {
+        $cidname = '未登録';
+    }
+    // CIDNAMEを配列にセット
+    $history_rows[$count]['CIDNAME'] = $cidname;
+    $count = $count + 1;
+}
+// 番号から名前を取得ここまで
 
 // 状態表示用のマッピング
 $status_map = [
@@ -57,7 +82,9 @@ $status_map = [
                     <tr>
                         <th style="width: 120px;">日付</th>
                         <th style="width: 100px;">時刻</th>
-                        <th>電話番号</th>
+                        <th style="width: 120px;">電話番号</th>
+                        <th style="width: 120px;">着信先</th>
+                        <th>発信者名</th>
                         <th style="width: 100px;">状態</th>
                     </tr>
                 </thead>
@@ -83,6 +110,12 @@ $status_map = [
                                 <a href="index.php?page=crm-page&phone=<?= urlencode($row['NUMBER']) ?>" title="この番号を検索">
                                     <?= htmlspecialchars($row['NUMBER']) ?>
                                 </a>
+                            </td>
+                            <td>
+                                <?= htmlspecialchars($row['DESTNUM']) ?>
+                            </td>
+                            <td>
+                                <?= htmlspecialchars($row['CIDNAME']) ?>
                             </td>
                             <td style="<?= $status_style ?>">
                                 <?= htmlspecialchars($status_label) ?>
