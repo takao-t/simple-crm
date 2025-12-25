@@ -32,3 +32,10 @@ define('USE_ABS', true);
 // --- ABSログ設定 ---
 // ABSの着信ログデータベースのパス (USE_ABS = true の場合のみ使用)
 define('ABS_LOG_PATH', '/var/log/asterisk/abslog.sqlite3');
+
+// --- AMI接続情報 ---
+// ABS連携等でAMI接続が必要な場合以下を設定
+define('AMI_HOST', 'localhost');
+define('AMI_USER', 'abspadmin');
+define('AMI_PASS', 'amipass1234');
+define('AMI_PORT', '5038');

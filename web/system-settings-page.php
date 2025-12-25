@@ -59,27 +59,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             
             //トークンとポートはAstDBにも保存 (USE_ABSはconfig.phpで設定)
             if (defined('USE_ABS') && USE_ABS) {
-                AbspFunctions\put_db_item('ABS/CTI', 'TOKEN', $cti_token);
-                AbspFunctions\put_db_item('ABS/CTI', 'PORT', $ws_port);
-                AbspFunctions\put_db_item('ABS/CTI', 'TPORT', $trigger_port);
+                $ami->putDbItem('ABS/CTI', 'TOKEN', $cti_token);
+                $ami->putDbItem('ABS/CTI', 'PORT', $ws_port);
+                $ami->putDbItem('ABS/CTI', 'TPORT', $trigger_port);
 
                 // --- ABS通知設定の保存処理 ---
                 $abs_notification_pos = $_POST['abs_notification_pos'] ?? '';
                 if ($abs_notification_pos === 'INCOMING' || $abs_notification_pos === 'ANSWER') {
                     // 値がある場合は保存
-                    AbspFunctions\put_db_item('ABS/CTI', 'POS', $abs_notification_pos);
+                    $ami->putDbItem('ABS/CTI', 'POS', $abs_notification_pos);
                 } else {
                     // 「なし」または空の場合は削除
-                    AbspFunctions\del_db_item('ABS/CTI', 'POS');
+                    $ami->delDbItem('ABS/CTI', 'POS');
                 }
                 // --- CID参照方法設定の保存処理 ---
                 $abs_cidname_ref = $_POST['abs_cidname_ref'] ?? '';
                 if ($abs_cidname_ref === 'SCRM') {
                     // 値がある場合は保存
-                    AbspFunctions\put_db_item('ABS/CTI', 'CIDREF', $abs_cidname_ref);
+                    $ami->putDbItem('ABS/CTI', 'CIDREF', $abs_cidname_ref);
                 } else {
                     // 「なし」または空の場合は削除
-                    AbspFunctions\del_db_item('ABS/CTI', 'CIDREF');
+                    $ami->delDbItem('ABS/CTI', 'CIDREF');
                 }
             }
             
@@ -181,8 +181,8 @@ $current_trigger_port = $userDb->getSystemSetting('trigger_port', '');
 // ABS通知とCIDname参照設定の現在値取得
 $current_abs_pos = ''; // デフォルトは空（なし）
 if (defined('USE_ABS') && USE_ABS) {
-    $current_abs_pos = AbspFunctions\get_db_item('ABS/CTI', 'POS');
-    $current_cidname_ref = AbspFunctions\get_db_item('ABS/CTI', 'CIDREF');
+    $current_abs_pos = $ami->getDbItem('ABS/CTI', 'POS');
+    $current_cidname_ref = $ami->getDbItem('ABS/CTI', 'CIDREF');
 }
 
 ?>
