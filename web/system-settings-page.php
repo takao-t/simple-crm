@@ -4,7 +4,9 @@ if (!defined('CRM_SYSTEM_INCLUDED')) {
     die("Direct access is not permitted.");
 }
 
-global $ami;
+if (defined('USE_ABS') && USE_ABS) {
+    global $ami;
+}
 
 // このページ自体へのアクセス権限チェック
 // (index.php で $is_admin は定義済みのはずだが、念のためセッションで再確認)
