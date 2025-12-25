@@ -19,8 +19,11 @@ if (!defined('FEATURE_CTI_POPUP_ENABLED')) {
 define('CRM_SYSTEM_INCLUDED', true); 
 
 if(USE_ABS){
-    require_once 'php/astman.php';
-    require_once 'php/functions.php';
+    require_once 'php/AbspManager.php';
+
+    // --- AbspManagerのインスタンス化 (グローバル変数として利用) ---
+    // config.php で定義済みの定数を使用
+    $ami = new \AbspFunctions\AbspManager(AMI_HOST, AMI_USER, AMI_PASS, AMI_PORT);
 }
 
 // デバッグ用

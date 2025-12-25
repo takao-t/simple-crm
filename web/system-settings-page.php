@@ -4,6 +4,8 @@ if (!defined('CRM_SYSTEM_INCLUDED')) {
     die("Direct access is not permitted.");
 }
 
+global $ami;
+
 // このページ自体へのアクセス権限チェック
 // (index.php で $is_admin は定義済みのはずだが、念のためセッションで再確認)
 $current_user_weight = $_SESSION['weight'] ?? 0;
