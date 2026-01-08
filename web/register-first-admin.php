@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error_message = 'パスワードが一致しません。';
     } else {
         // 最初のユーザーを「ウェイト90 (管理者)」として登録
-        if ($userDb->createUser($username, $password, $extension, 90)) {
+        if ($userDb->createUser($username, $password, $extension, 'yes', 90)) {
             // 成功したら、そのままログインセッションも作成
             session_regenerate_id(true);
             $user = $userDb->getUserByName($username);
