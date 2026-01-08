@@ -35,6 +35,7 @@ class CrmUserDbDriverSQLite3
                     username TEXT NOT NULL UNIQUE,
                     password_hash TEXT NOT NULL,
                     extension TEXT,
+                    bphone TEXT,
                     weight INTEGER DEFAULT 30,
                     created_at TEXT
                 )'
@@ -106,7 +107,7 @@ class CrmUserDbDriverSQLite3
      * @param int $weight
      * @return bool
      */
-    public function createUser(string $username, string $password, string $extension, int $weight): bool
+    public function createUser(string $username, string $password, string $extension, string $bphone, int $weight): bool
     {
         if (empty($username) || empty($password)) return false;
 
@@ -119,13 +120,14 @@ class CrmUserDbDriverSQLite3
 
         try {
             $db = $this->getDbConnection();
-            $sql = "INSERT INTO crm_users (username, password_hash, extension, weight, created_at) 
-                    VALUES (:username, :password_hash, :extension, :weight, :created_at)";
+            $sql = "INSERT INTO crm_users (username, password_hash, extension, bphone, weight, created_at) 
+                    VALUES (:username, :password_hash, :extension, :bphone, :weight, :created_at)";
             
             $stmt = $db->prepare($sql);
             $stmt->bindValue(':username', $username, SQLITE3_TEXT);
             $stmt->bindValue(':password_hash', $hash, SQLITE3_TEXT);
             $stmt->bindValue(':extension', $extension, SQLITE3_TEXT);
+            $stmt->bindValue(':bphone', $bphone, SQLITE3_TEXT);
             $stmt->bindValue(':weight', $weight, SQLITE3_INTEGER);
             $stmt->bindValue(':created_at', $timestamp, SQLITE3_TEXT);
 
@@ -184,7 +186,7 @@ class CrmUserDbDriverSQLite3
         try {
             $db = $this->getDbConnection();
             $results = [];
-            $res = $db->query("SELECT id, username, extension, weight, created_at FROM crm_users ORDER BY username");
+            $res = $db->query("SELECT id, username, extension, bphone, weight, created_at FROM crm_users ORDER BY username");
             
             while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
                 $results[] = $row;
@@ -226,16 +228,18 @@ class CrmUserDbDriverSQLite3
      * @param int $user_id
      * @param string $username
      * @param string $extension
+     * @param string $bphone
      * @param int $weight
      * @return bool
      */
-    public function updateUser(int $user_id, string $username, string $extension, int $weight): bool
+    public function updateUser(int $user_id, string $username, string $extension, string $bphone, int $weight): bool
     {
         try {
             $db = $this->getDbConnection();
-            $stmt = $db->prepare("UPDATE crm_users SET username = :username, extension = :extension, weight = :weight WHERE id = :id");
+            $stmt = $db->prepare("UPDATE crm_users SET username = :username, extension = :extension, bphone = :bphone, weight = :weight WHERE id = :id");
             $stmt->bindValue(':username', $username, SQLITE3_TEXT);
             $stmt->bindValue(':extension', $extension, SQLITE3_TEXT);
+            $stmt->bindValue(':bphone', $bphone, SQLITE3_TEXT);
             $stmt->bindValue(':weight', $weight, SQLITE3_INTEGER);
             $stmt->bindValue(':id', $user_id, SQLITE3_INTEGER);
             

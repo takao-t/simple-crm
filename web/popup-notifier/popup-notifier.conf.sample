@@ -1,0 +1,26 @@
+# --- クライアント接続用 (WebSocket) ---
+# SSLを使用するかどうか (true / false)
+USE_SSL=false
+
+# クライアントが接続するポート(ws/wss用)
+CLIENT_PORT=8990
+
+# SSL証明書 (USE_SSL=true の場合のみ必要)
+# SSL使用時の証明書はapache(https)とあわせること
+CERT_FILE=/usr/local/ssl/cert.pem
+KEY_FILE=/usr/local/ssl/key.pem
+
+# --- トリガー用 (PBX連携・ローカル) ---
+HTTP_PORT=8989
+
+# --- 共通設定 ---
+SECRET_TOKEN=mytoken
+
+# /api/trigger の許可リスト
+# 複数のIP/CIDRをカンマ区切りで
+# 例:ローカルホストのみ許可
+TRIGGER_ALLOW=127.0.0.1
+
+# /crmws (WebSocket) の許可リスト
+# 例: ローカルホストと社内LAN全体を許可
+CRMWS_ALLOW=127.0.0.1,192.168.0.0/16

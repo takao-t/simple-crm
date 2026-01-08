@@ -13,12 +13,6 @@ $userDb = CrmUserDbDriver::createInstance();
 
 $error_message = '';
 
-// 0, DBの存在チェック(ディレクトリ作成失敗を含む)
-if ($userDb->countUsers() === -1) {
-    echo('管理用データベースの設定に誤りがあります<br>');
-    exit;
-}
-
 // 1. ユーザーが一人もいなければ、初回登録ページへ強制移動
 if ($userDb->countUsers() === 0) {
     header('Location: register-first-admin.php');
@@ -52,6 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['username'] = $user['username'];
             $_SESSION['weight'] = $user['weight'];
             $_SESSION['extension'] = $user['extension']; // CTI連携用
+            $_SESSION['bphone'] = $user['bphone'] ?? 'no';
 
             header('Location: index.php');
             exit;
@@ -91,6 +86,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
             <button type="submit" class="btn">ログイン</button>
         </form>
+    <script type="text/javascript">
+        // ログイン画面に来た時点で、以前のブラウザフォン接続維持フラグは不要とみなして削除する
+        sessionStorage.removeItem('wp_autoconnect');
+    </script>
     </div>
 </body>
 </html>

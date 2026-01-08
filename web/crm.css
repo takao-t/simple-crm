@@ -200,13 +200,15 @@ body.light-mode .btn-neutral:hover {
 /* ユーザー管理ページ (パスワード変更フォーム) */
 /* =================================== */
 .password-form {
+    /* グリッド定義を削除し、縦並び(ブロック)レイアウトに戻す */
     max-width: 400px; /* フォームの最大幅 */
 }
 .password-form label {
+    /* ラベルは入力欄の上に表示 */
     display: block;
     font-weight: bold;
     margin-bottom: 5px;
-    margin-top: 10px;
+    margin-top: 10px; /* 項目間の「上下の詰まり」を解消  */
 }
 .password-form strong {
     font-weight: bold;
@@ -214,6 +216,7 @@ body.light-mode .btn-neutral:hover {
     margin-bottom: 10px;
 }
 .password-form .btn {
+    /* ボタン上部の間隔を調整 */
     margin-top: 15px;
 }
 
@@ -224,18 +227,26 @@ body.light-mode .btn-neutral:hover {
 .input-with-button {
     display: flex;
     align-items: center;
+    /* 隙間を小さく */
     gap: 5px; 
 }
 
+/* * ボタンを配置するため、元の入力欄の幅を
+ * 調整する必要があります。
+ */
 .input-with-button .input-middle2 {
+    /* * .input-middle2 (10em) からボタン幅を引く 
+     * (input-middle2 が 10em の前提)
+     */
     width: 8.5em; 
 }
 
 /* 発信ボタンのスタイル */
 .btn-call {
+    /* .btn-row とスタイルを合わせる */
     padding: 1px 6px;
     font-size: 11px;
-    background-color: #4caf50;
+    background-color: #4caf50; /* 成功・発信をイメージさせる緑 */
     border-color: #388e3c;
     color: #ffffff !important;
     font-weight: bold;
@@ -244,13 +255,15 @@ body.light-mode .btn-neutral:hover {
     filter: brightness(1.2);
 }
 body.light-mode .btn-call {
+    /* ライトモードでも見やすいように */
     background-color: #2e7d32;
     border-color: #1b5e20;
 }
 
+/* ポップアップ停止中のメニューボタンを赤色で強調 */
 .menu a.active-danger {
-    background-color: rgba(217, 83, 79, 0.2);
-    color: #d9534f !important;
+    background-color: rgba(217, 83, 79, 0.2); /* $btn-danger の薄い背景 */
+    color: #d9534f !important; /* 赤文字 */
     font-weight: bold;
 }
 
@@ -260,8 +273,10 @@ body.light-mode .btn-call {
 
 .tab-navigation {
     display: flex;
+    /* 変数を使用してテーマ連動させる */
     border-bottom: 2px solid var(--border-color);
     margin-bottom: 15px;
+    /* 背景をSurface色にすることで、メイン背景との差分を作る */
     background-color: var(--surface-color);
     padding-top: 10px;
     padding-left: 10px;
@@ -271,9 +286,11 @@ body.light-mode .btn-call {
     padding: 10px 20px;
     margin-right: 5px;
     text-decoration: none;
+    /* 変数を使用 */
     color: var(--secondary-text-color);
+    /* 非アクティブ時はメニュー背景色などを使用 */
     background-color: var(--menu-bg-color);
-    border-radius: 5px 5px 0 0;
+    border-radius: 5px 5px 0 0; /* 上だけ丸く */
     border: 1px solid var(--border-color);
     border-bottom: none;
     font-weight: bold;
@@ -281,16 +298,110 @@ body.light-mode .btn-call {
 }
 
 .tab-item:hover {
+    /* ホバー時はプライマリカラーの薄い色をかける */
     background-color: rgba(137, 180, 250, 0.1);
     color: var(--primary-color);
 }
 
 /* アクティブなタブ */
 .tab-item.active {
+    /* コンテンツエリア(bodyの背景)と同じ色にして境界を消す */
     background-color: var(--bg-color);
+    
+    /* 文字色を強調 */
     color: var(--primary-color);
+    
+    /* 下線を背景色と同じにして「繋がっている」ように見せる */
     border-bottom: 2px solid var(--bg-color);
-    margin-bottom: -2px;
+    
+    margin-bottom: -2px;        /* 線の上に被せる */
     position: relative;
+    
+    /* アクティブなタブの上部にアクセントカラーをつける */
     border-top: 3px solid var(--primary-color);
+}
+
+/* --- Web Phone UI --- */
+.webphone-box {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: rgba(0, 0, 0, 0.2);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+}
+
+.webphone-title {
+    font-size: 0.85em;
+    color: var(--secondary-text-color);
+    margin-bottom: 8px;
+    text-align: center;
+    font-weight: bold;
+}
+
+.wp-row {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 8px;
+}
+
+.wp-btn-half {
+    flex: 1;
+    text-align: center;
+}
+
+.wp-input {
+    width: 100%;
+    font-size: 1.1em;
+    text-align: center;
+    letter-spacing: 1px;
+    background-color: var(--bg-color); 
+}
+
+.wp-status {
+    font-size: 0.8em;
+    text-align: center;
+    color: var(--secondary-text-color);
+    margin-top: 5px;
+    min-height: 1.2em;
+}
+
+/* 状態ごとの色分け */
+.wp-status.status-connected { color: #4caf50; } /* Green */
+.wp-status.status-ringing { color: #ff9800; font-weight: bold; animation: blink 1s infinite; } /* Orange */
+.wp-status.status-talking { color: #f44336; font-weight: bold; } /* Red */
+
+@keyframes blink { 50% { opacity: 0; } }
+
+/* Disabled時の見た目調整 */
+.webphone-box button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    filter: grayscale(100%);
+}
+
+/* crm.css に追記 */
+
+/* ボタン内のレイアウト調整 */
+.webphone-box .btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px; /* アイコンと文字の間隔 */
+    padding: 6px 10px; /* 少し縦幅を持たせる */
+}
+
+/* SVGアイコンのサイズと色 */
+.wp-icon {
+    width: 18px;
+    height: 18px;
+    fill: currentColor; /* 文字色と同じ色にする */
+}
+
+.btn-call {
+    background-color: #4caf50;
+    color: white;
+}
+.btn-danger {
+    background-color: #f44336;
+    color: white;
 }

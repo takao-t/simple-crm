@@ -10,7 +10,7 @@ class ZipCodeDbDriverSQLite3
         $dir = dirname(CRM_DB_PATH);
         $this->dbPath = $dir . '/zipcode.db';
 
-        // ディレクトリがない場合の処理は念のため
+        // ディレクトリがない場合の処理はCrmDbDriver側で担保されている前提だが念のため
         if (!is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
@@ -29,6 +29,7 @@ class ZipCodeDbDriverSQLite3
     {
         $db = $this->getDbConnection();
         // zip_codesテーブル作成
+        // 読み仮名等は検索に使わないなら省略可能ですが、CSV構造に合わせて全定義します
         $sql = "CREATE TABLE IF NOT EXISTS zip_codes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             jis_code TEXT,

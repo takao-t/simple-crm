@@ -1,0 +1,12 @@
+{
+    "ami_host": "localhost:5038",
+    "ami_username": "dbmanager",
+    "ami_secret": "ultrasecret",
+    "external_trunks": [
+        "demophone",
+        "hikari-rtx",
+        "DAHDI",
+        "SIP/out_trunk"
+    ],
+    "websocket_port": ":8080"
+}

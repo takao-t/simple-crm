@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
                 if (shouldPopup) {
                     const phoneNumber = message.data.phone;
-                    const crmPageUrl = `index.php?page=crm-page&phone=${encodeURIComponent(phoneNumber)}`;
+                    const crmPageUrl = `index.php?page=crm-page&phone=${encodeURIComponent(phoneNumber)}&popup=1`;
                 
                     // -----------------------------------------------------------------
                     // タブローテーションロジックの実行

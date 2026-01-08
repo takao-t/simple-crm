@@ -13,6 +13,10 @@ require_once 'php/CrmUserDbDriver.php';
 $crm = CrmDbDriver::createInstance();
 $userDb = CrmUserDbDriver::createInstance();
 
+if(USE_ABS){
+    global $ami;
+}
+
 $message = '';
 $message_type = ''; // 'success' or 'error'
 $search_results = [];
@@ -103,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $prefix = $userDb->getSystemSetting('outbound_prefix', '');
             $command = "channel originate Local/{$user_extension}@c2c-inside extension {$prefix}{$target_number_clean}@c2c-outside";
             if(USE_ABS){
-                AbspFunctions\exec_cli_command($command);
+                $ami->execCliCommand($command);
             
                 //$debug_message = 'DEBUG (Click2Call): ' . htmlspecialchars($command);
                 $message = '発信処理を開始しました。';
@@ -277,7 +281,14 @@ if ($is_search_request) {
 <h2>情報管理 (CRM)</h2>
 
 <div class="crm-container">
-    <form action="index.php?page=crm-page" method="post" id="crm-form">
+
+<?php
+// 現在のクエリパラメータを維持して action を生成
+$current_params = $_GET;
+$current_params['page'] = 'crm-page'; // 明示的にページを指定
+$action_url = 'index.php?' . http_build_query($current_params);
+?>
+<form action="<?= htmlspecialchars($action_url) ?>" method="post" id="crm-form">
         
         <div class="crm-grid-row">
             <div class="crm-label-group">
@@ -315,9 +326,9 @@ if ($is_search_request) {
                            value="<?= htmlspecialchars($form_data['phone']) ?>"
                            pattern="[0-9*#-]+" title="数字、*、#、ハイフンのみ入力可能です">
                     <?php if (USE_ABS): ?>
-                    <button type="submit" name="action_c2c_phone" value="1" class="btn btn-call" title="この番号に発信">
+                        <button type="submit" name="action_c2c_phone" class="btn btn-call c2c-trigger" data-phone-input="phone" title="この番号に発信">
                         発信
-                    </button>
+                        </button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -329,9 +340,9 @@ if ($is_search_request) {
                            value="<?= htmlspecialchars($form_data['mobile_phone']) ?>"
                            pattern="[0-9*#-]*" title="数字、*、#、ハイフンのみ入力可能です">
                     <?php if (USE_ABS): ?>
-                    <button type="submit" name="action_c2c_mobile" value="1" class="btn btn-call" title="この番号に発信">
+                        <button type="submit" name="action_c2c_mobile" class="btn btn-call c2c-trigger" data-phone-input="mobile_phone" title="この番号に発信">
                         発信
-                    </button>
+                        </button>
                     <?php endif; ?>
                 </div>
             </div>
@@ -556,6 +567,57 @@ document.addEventListener('DOMContentLoaded', function() {
             });
         });
     }
+
+
+    const c2cButtons = document.querySelectorAll('.c2c-trigger');
+    
+    c2cButtons.forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            
+            // ★変更点: WebPhoneの状態チェックを最初に行う
+            // WebPhoneが存在し、かつDISCONNECTEDでない(=使える)場合のみ、JSで割り込む
+            if (window.webPhoneCtrl && window.webPhoneCtrl.state !== 'DISCONNECTED') {
+                e.preventDefault(); // フォーム送信を止める
+
+                // --- 既存のJS発信ロジック ---
+                const inputName = this.getAttribute('data-phone-input');
+                const inputEl = document.querySelector(`input[name="${inputName}"]`);
+                let targetNumber = inputEl ? inputEl.value : '';
+                targetNumber = targetNumber.replace(/[^0-9*#]/g, '');
+
+                if (!targetNumber) {
+                    alert('発信先の番号が入力されていません。');
+                    return;
+                }
+
+                if (confirm(`${targetNumber} に発信しますか？(WebPhone)`)) {
+                    // UI更新など
+                    const wpInput = document.getElementById('wp-input-number');
+                    if (wpInput) wpInput.value = targetNumber;
+                    
+                    window.webPhoneCtrl.triggerCallbackDial(targetNumber);
+                }
+            }
+            // ★WebPhoneが使えない(ポップアップ等)の場合
+            else {
+                // e.preventDefault() しない = そのままフォームが送信される
+                // PHP側の if (isset($_POST['action_c2c_phone'])) ブロックが動く
+                
+                // バリデーション用に番号取得
+                const inputName = this.getAttribute('data-phone-input');
+                const inputEl = document.querySelector(`input[name="${inputName}"]`);
+                if (!inputEl || !inputEl.value.trim()) {
+                    e.preventDefault(); // 空なら送信しない
+                    alert('発信先の番号が入力されていません。');
+                } else {
+                    if(!confirm(`${inputEl.value} に発信しますか？(AMI経由)`)){
+                        e.preventDefault();
+                    }
+                }
+            }
+        });
+    });
+
     
     //  ページネーションリンク(GET)でフォームが送信されないよう、
     //  検索ボタン以外のEnterキー挙動を制御

@@ -54,6 +54,14 @@ $WS_URL = $ws_protocol . "{$ws_host}:" . $WS_PORT . "/crmws";
 //デバッグ表示
 //echo $WS_URL;
 
+// Web Phone用URLの生成 ---
+// config.phpで定義したポートとパスを使用
+// 未定義時のフォールバックも念のため入れておく
+$wp_port = defined('WEBPHONE_WS_PORT') ? WEBPHONE_WS_PORT : '8766';
+$wp_path = defined('WEBPHONE_WS_PATH') ? WEBPHONE_WS_PATH : '/phone';
+
+$WEBPHONE_URL = $ws_protocol . "{$ws_host}:" . $wp_port . $wp_path;
+
 // 1. DBにユーザーが一人もいなければ、初回登録ページへ
 if ($userDb->countUsers() === 0) {
     header('Location: register-first-admin.php');
@@ -67,6 +75,7 @@ if (!isset($_SESSION['user_id'])) {
 }
 
 $current_user_weight = $_SESSION['weight'] ?? 0;
+$current_user_bphone = $_SESSION['bphone'] ?? 'no';
 $is_admin = ($current_user_weight >= 90);
 
 // デフォルトのタイムゾーン設定
@@ -119,6 +128,7 @@ if (array_key_exists($page, $routes) && file_exists($routes[$page])) {
         // PHPから動的に生成されたWebSocket URLをJavaScript変数に格納する
         // 必ず引用符（' や "）で囲んで文字列として出力する
         const DYNAMIC_WS_URL = '<?= htmlspecialchars($WS_URL, ENT_QUOTES, 'UTF-8') ?>';
+        const WEBPHONE_WS_URL = '<?= htmlspecialchars($WEBPHONE_URL, ENT_QUOTES, 'UTF-8') ?>';
         const MY_EXTENSION = '<?= htmlspecialchars($_SESSION['extension'], ENT_QUOTES, 'UTF-8') ?>';
         const CTI_ENABLED = <?= FEATURE_CTI_POPUP_ENABLED ? 'true' : 'false' ?>;
         const MAX_CTI_TABS = <?= MAX_CTI_TABS ?>;
@@ -177,12 +187,58 @@ if (array_key_exists($page, $routes) && file_exists($routes[$page])) {
                 <li>
                     <a href="logout-crm.php">
                         🚪 ログアウト (<?= htmlspecialchars($_SESSION['username'] ?? 'user') ?>)
+                        <br>
+                        ☎   内線 : <?= htmlspecialchars($_SESSION['extension'] ?? '------') ?>
                     </a>
                 </li>
                 <li>
                     <a href="#" id="theme-toggle-btn">🌓 表示モード切替</a>
                 </li>
             </ul>
+<?php 
+if (!defined('FEATURE_WEBPHONE_ENABLED')) define('FEATURE_WEBPHONE_ENABLED', false); 
+?>
+
+<?php 
+// ポップアップ判定: URLパラメータ 'popup' があるか確認
+$is_popup = isset($_GET['popup']) && $_GET['popup'] == '1';
+?>
+
+<?php if (FEATURE_WEBPHONE_ENABLED && $current_user_bphone === 'yes' && !$is_popup): ?>
+    <div class="menu-section-start"></div>
+    <div id="webphone-container" class="webphone-box">
+        <div class="webphone-title">Web Phone</div>
+        
+        <div class="wp-row">
+            <button type="button" id="wp-btn-connect" class="btn btn-row wp-btn-half">接続</button>
+            <button type="button" id="wp-btn-disconnect" class="btn btn-row wp-btn-half btn-neutral" disabled>切断</button>
+        </div>
+
+        <div class="wp-row">
+            <input type="text" id="wp-input-number" class="wp-input" placeholder="番号入力" autocomplete="off">
+        </div>
+
+        <div class="wp-row">
+            <button type="button" id="wp-btn-call" class="btn wp-btn-half btn-call" disabled>通話</button>
+            <button type="button" id="wp-btn-hangup" class="btn wp-btn-half btn-danger" disabled>終話</button>
+        </div>
+
+        <div id="wp-status-display" class="wp-status">未接続</div>
+    </div>
+    <script type="module">
+        import { WebPhoneController } from './js/WebPhoneController.js';
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            const config = {
+                wsUrl: WEBPHONE_WS_URL,
+                extension: MY_EXTENSION, // index.php内で定義済みの定数
+                tokenUrl: 'ajax-webphone-token.php', // JWT取得用
+                dialUrl: 'ajax-webphone-dial.php'    // 発信(callback)用
+            };
+            window.webPhoneCtrl = new WebPhoneController(config);
+        });
+    </script>
+<?php endif; ?>
         </nav>
 
         <main class="content">

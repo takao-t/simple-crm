@@ -38,6 +38,7 @@ class CrmUserDbDriverMaria
                     username VARCHAR(255) NOT NULL UNIQUE,
                     password_hash TEXT NOT NULL,
                     extension TEXT,
+                    bphone TEXT,
                     weight INT DEFAULT 30,
                     created_at DATETIME
                 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4'
@@ -102,10 +103,11 @@ class CrmUserDbDriverMaria
      * @param string $username
      * @param string $password
      * @param string $extension
+     * @param string $bphone
      * @param int $weight
      * @return bool
      */
-    public function createUser(string $username, string $password, string $extension, int $weight): bool
+    public function createUser(string $username, string $password, string $extension, string $bphone, int $weight): bool
     {
         if (empty($username) || empty($password)) return false;
 
@@ -117,13 +119,14 @@ class CrmUserDbDriverMaria
 
         try {
             $pdo = $this->getDbConnection();
-            $sql = "INSERT INTO crm_users (username, password_hash, extension, weight, created_at) 
-                    VALUES (:username, :password_hash, :extension, :weight, :created_at)";
+            $sql = "INSERT INTO crm_users (username, password_hash, extension, bphone, weight, created_at) 
+                    VALUES (:username, :password_hash, :extension, :bphone, :weight, :created_at)";
             
             $stmt = $pdo->prepare($sql);
             $stmt->bindValue(':username', $username, PDO::PARAM_STR);
             $stmt->bindValue(':password_hash', $hash, PDO::PARAM_STR);
             $stmt->bindValue(':extension', $extension, PDO::PARAM_STR);
+            $stmt->bindValue(':bphone', $bphone, PDO::PARAM_STR);
             $stmt->bindValue(':weight', $weight, PDO::PARAM_INT);
             $stmt->bindValue(':created_at', $timestamp, PDO::PARAM_STR);
 
@@ -175,7 +178,7 @@ class CrmUserDbDriverMaria
     {
         try {
             $pdo = $this->getDbConnection();
-            $stmt = $pdo->query("SELECT id, username, extension, weight, created_at FROM crm_users ORDER BY username");
+            $stmt = $pdo->query("SELECT id, username, extension, bphone, weight, created_at FROM crm_users ORDER BY username");
             return $stmt->fetchAll();
 
         } catch (\PDOException $e) {
@@ -209,16 +212,18 @@ class CrmUserDbDriverMaria
      * @param int $user_id
      * @param string $username
      * @param string $extension
+     * @param string $bphone
      * @param int $weight
      * @return bool
      */
-    public function updateUser(int $user_id, string $username, string $extension, int $weight): bool
+    public function updateUser(int $user_id, string $username, string $extension, string $bphone, int $weight): bool
     {
         try {
             $pdo = $this->getDbConnection();
-            $stmt = $pdo->prepare("UPDATE crm_users SET username = :username, extension = :extension, weight = :weight WHERE id = :id");
+            $stmt = $pdo->prepare("UPDATE crm_users SET username = :username, extension = :extension, bphone = :bphone, weight = :weight WHERE id = :id");
             $stmt->bindValue(':username', $username, PDO::PARAM_STR);
             $stmt->bindValue(':extension', $extension, PDO::PARAM_STR);
+            $stmt->bindValue(':bphone', $bphone, PDO::PARAM_STR);
             $stmt->bindValue(':weight', $weight, PDO::PARAM_INT);
             $stmt->bindValue(':id', $user_id, PDO::PARAM_INT);
             

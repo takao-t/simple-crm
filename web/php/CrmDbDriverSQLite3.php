@@ -114,8 +114,6 @@ class CrmDbDriverSQLite3
             $stmt_save->bindValue(':address_kana', $data['address_kana'] ?? '', SQLITE3_TEXT);
             $stmt_save->bindValue(':note', $data['note'] ?? '', SQLITE3_TEXT);
             $stmt_save->bindValue(':updated_at', $timestamp, SQLITE3_TEXT);
-            
-            // ★変更: 更新者をバインド (未指定の場合は空文字ではなく 'system' 等を入れても良いがここでは空文字)
             $stmt_save->bindValue(':last_updated_by', $data['last_updated_by'] ?? '', SQLITE3_TEXT);
 
             $result = $stmt_save->execute();

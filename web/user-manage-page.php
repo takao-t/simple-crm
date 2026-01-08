@@ -16,6 +16,7 @@ $message_type = ''; // 'success' or 'error'
 
 // 現在のユーザー情報をセッションから取得
 $current_user_id = $_SESSION['user_id'] ?? 0;
+$current_user_bphone = $_SESSION['bphone'] ?? 'no';
 $current_user_weight = $_SESSION['weight'] ?? 0;
 $is_admin = ($current_user_weight >= 90);
 
@@ -58,13 +59,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $new_username = $_POST['new_username'];
             $new_password = $_POST['new_password'];
             $new_extension = $_POST['new_extension'];
+            $new_bphone = $_POST['new_bphone'];
             $new_weight = (int)($_POST['new_weight'] ?? 30);
 
             if (empty($new_username) || empty($new_password) || empty($new_extension)) {
                 $message = '新規ユーザーの「ユーザ名」「パスワード」「内線番号」は必須です。';
                 $message_type = 'error';
             } else {
-                if ($userDb->createUser($new_username, $new_password, $new_extension, $new_weight)) {
+                if ($userDb->createUser($new_username, $new_password, $new_extension, $new_bphone, $new_weight)) {
                     $message = "ユーザー「{$new_username}」を登録しました。";
                     $message_type = 'success';
                 } else {
@@ -92,11 +94,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             }
         }
         
-        // ★ 4. ユーザー情報更新 (内線番号と権限)
+        // 4. ユーザー情報更新 (内線番号と権限)
         if (isset($_POST['action_update_user'])) {
             $user_id_to_update = (int)$_POST['user_id'];
             $updated_username = $_POST['username'];
             $updated_extension = $_POST['extension'];
+            $updated_bphone = $_POST['bphone'];
             $updated_weight = (int)$_POST['weight'];
 
             // バリデーション
@@ -108,7 +111,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $message_type = 'error';
             } else {
                 // データベース更新メソッドを呼び出す (CrmUserDbDriver::updateUserを使用)
-                if ($userDb->updateUser($user_id_to_update, $updated_username, $updated_extension, $updated_weight)) {
+                if ($userDb->updateUser($user_id_to_update, $updated_username, $updated_extension, $updated_bphone,  $updated_weight)) {
                     $message = "ユーザー「{$updated_username}」の情報を更新しました。";
                     $message_type = 'success';
                 } else {
@@ -164,6 +167,7 @@ if ($is_admin) {
                 <tr>
                     <th>ユーザ名</th>
                     <th>内線番号</th>
+                    <th>ブラウザフォン</th>
                     <th>権限</th>
                     <th>登録日</th>
                     <th>操作</th>
@@ -180,6 +184,12 @@ if ($is_admin) {
                         <td><?= htmlspecialchars($user['username']) ?></td>
                         <td>
                             <input type="text" name="extension" value="<?= htmlspecialchars($user['extension']) ?>" class="input-xshort" required>
+                        </td>
+                        <td>
+                            <select name="bphone" class="input-short2">
+                                <option value="yes" <?= ($user['bphone'] === 'yes') ? 'selected' : '' ?>>使う</option>
+                                <option value="no" <?= ($user['bphone'] !== 'yes') ? 'selected' : '' ?>>使わない</option>
+                            </select>
                         </td>
                         <td>
                             <select name="weight" class="input-xmiddle">
@@ -223,6 +233,12 @@ if ($is_admin) {
                 <label for="new_extension">内線番号:</label>
                 <input type="text" name="new_extension" id="new_extension" class="input-short2" required>
                 
+                <label for="new_bphone">ブラウザフォン:</label>
+                <select name="new_bphone" id="new_bphone" class="input-short2">
+                    <option value="no" selected>使わない</option>
+                    <option value="yes">使う</option>
+                </select>
+
                 <label for="new_weight">権限:</label>
                 <select name="new_weight" id="new_weight" class="input-short2">
                     <option value="30" selected>一般ユーザ</option>

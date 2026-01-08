@@ -39,3 +39,14 @@ define('AMI_HOST', 'localhost');
 define('AMI_USER', 'abspadmin');
 define('AMI_PASS', 'amipass1234');
 define('AMI_PORT', '5038');
+
+// CRM組み込みブラウザフォン設定
+//  注意:組み込みブラウザフォンを使うにはGAGが必要
+// ブラウザフォン(左メニュー下)表示設定
+define('FEATURE_WEBPHONE_ENABLED', true);
+// JWT認証用のシークレット(GAGの設定とあわせる)
+define('JWT_SECRET', "CHANGE_THIS_TO_A_VERY_LONG_RANDOM_STRING");
+// GAG接続ポート
+define('WEBPHONE_WS_PORT', '8766');
+// GAG接続エンドポイント
+define('WEBPHONE_WS_PATH', '/phone');

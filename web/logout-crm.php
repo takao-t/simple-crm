@@ -18,6 +18,7 @@ if (ini_get("session.use_cookies")) {
 // セッションを破棄
 session_destroy();
 
+
 // ログインページにリダイレクト
 header('Location: login-crm.php');
 exit;
