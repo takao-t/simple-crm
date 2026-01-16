@@ -19,7 +19,7 @@ SECRET_TOKEN=mytoken
 # /api/trigger の許可リスト
 # 複数のIP/CIDRをカンマ区切りで
 # 例:ローカルホストのみ許可
-TRIGGER_ALLOW=127.0.0.1
+TRIGGER_ALLOW=127.0.0.1,::1
 
 # /crmws (WebSocket) の許可リスト
 # 例: ローカルホストと社内LAN全体を許可
