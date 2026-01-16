@@ -13,6 +13,10 @@ $userDb = CrmUserDbDriver::createInstance();
 
 $error_message = '';
 
+if ($userDb->countUsers() === -1) {
+            $error_message = 'ユーザ管理DBのディレクトリが正しくないようです。インストールを確認してください。';
+}
+
 // 1. ユーザーが一人もいなければ、初回登録ページへ強制移動
 if ($userDb->countUsers() === 0) {
     header('Location: register-first-admin.php');

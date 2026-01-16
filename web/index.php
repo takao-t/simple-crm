@@ -103,6 +103,19 @@ if (array_key_exists($page, $routes) && file_exists($routes[$page])) {
     $include_file = 'crm-page.php';
     $page = 'crm-page';
 }
+
+// --- 追加: Ajaxリクエストかどうかの判定 ---
+// HTTPヘッダ または クエリパラメータ(ajax_mode) で判定
+$is_ajax = (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) == 'xmlhttprequest') 
+           || (isset($_GET['ajax_mode']) && $_GET['ajax_mode'] === '1');
+
+if ($is_ajax) {
+    // Ajaxの場合は、HTMLヘッダーやメニューを出力せず、コンテンツ部分だけ読み込んで終了
+    require_once $include_file;
+    exit; // ここで処理を終了
+}
+
+// --- 以下、通常アクセス時のフルHTML出力 ---
 ?>
 <!DOCTYPE html>
 <html lang="ja">
@@ -122,6 +135,7 @@ if (array_key_exists($page, $routes) && file_exists($routes[$page])) {
             margin-bottom: 10px;
         }
     </style>
+    <script src="js/spa-navigation.js" defer></script>
 </head>
 <body>
     <script>
@@ -185,7 +199,7 @@ if (array_key_exists($page, $routes) && file_exists($routes[$page])) {
                 <?php endif; ?>
                 
                 <li>
-                    <a href="logout-crm.php">
+                    <a href="logout-crm.php" class="no-ajax"i onclick="return confirm('ログアウトしてよろしいですか？');">
                         🚪 ログアウト (<?= htmlspecialchars($_SESSION['username'] ?? 'user') ?>)
                         <br>
                         ☎   内線 : <?= htmlspecialchars($_SESSION['extension'] ?? '------') ?>
@@ -241,7 +255,7 @@ $is_popup = isset($_GET['popup']) && $_GET['popup'] == '1';
 <?php endif; ?>
         </nav>
 
-        <main class="content">
+        <main id="main-content" class="content">
             <?php
             // ルーティングで決定したファイルを読み込む
             require_once $include_file;

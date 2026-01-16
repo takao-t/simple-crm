@@ -193,6 +193,9 @@ else if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $current_page = max(1, intval($_GET['p'] ?? 1)); // ページ番号を取得
         $search_query_params = $_GET;
         unset($search_query_params['page'], $search_query_params['p']); // ページャー用パラメータは除外
+        
+        // Ajax判定用の ajax_mode も除外しておく
+        unset($search_query_params['ajax_mode']);
     }
 }
 
@@ -286,6 +289,10 @@ if ($is_search_request) {
 // 現在のクエリパラメータを維持して action を生成
 $current_params = $_GET;
 $current_params['page'] = 'crm-page'; // 明示的にページを指定
+
+// Ajaxモードのパラメータは削除しておく
+unset($current_params['ajax_mode']);
+
 $action_url = 'index.php?' . http_build_query($current_params);
 ?>
 <form action="<?= htmlspecialchars($action_url) ?>" method="post" id="crm-form">
@@ -453,6 +460,10 @@ $action_url = 'index.php?' . http_build_query($current_params);
                 <?php
                 // 検索条件をURLクエリ文字列に変換
                 unset($search_query_params['page'], $search_query_params['p']); // ページ番号自体は除く
+                
+                // Ajaxモードのパラメータも除く
+                unset($search_query_params['ajax_mode']);
+                
                 $http_query_string = http_build_query($search_query_params);
                 ?>
 
@@ -494,7 +505,8 @@ $action_url = 'index.php?' . http_build_query($current_params);
 </div>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
+// SPA対応のため、DOMContentLoadedではなく即時実行関数(IIFE)で囲む
+(function() {
     
     // --- 1. 操作対象の要素を取得 ---
     const btnClear = document.getElementById('btn-clear');
@@ -538,7 +550,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 msgArea.textContent = '';
                 msgArea.className = 'crm-message-area';
             }
-            history.replaceState(null, null, window.location.pathname + '?page=crm-page');
+            // URLパラメータをリセット
+            const newUrl = window.location.pathname + '?page=crm-page';
+            history.replaceState(null, null, newUrl);
             updateDeleteButtonState();
             if (phoneInput) phoneInput.focus();
         });
@@ -560,8 +574,8 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // フォームの action 属性を更新して、POST検索であることを明示する
                     const form = document.getElementById('crm-form');
-                    if(form) form.action = 'index.php?page=crm-page'; // POST先
-                    
+                    // Ajax経由でPOSTされるようactionはそのまま、またはjs/spa-navigation.jsが処理する
+                    // ここでは単にクリックイベントを発火させるだけで良い
                     btnSearch.click();
                 }
             });
@@ -574,8 +588,10 @@ document.addEventListener('DOMContentLoaded', function() {
     c2cButtons.forEach(btn => {
         btn.addEventListener('click', function(e) {
             
-            // ★変更点: WebPhoneの状態チェックを最初に行う
-            // WebPhoneが存在し、かつDISCONNECTEDでない(=使える)場合のみ、JSで割り込む
+            // ★変更点: 親要素へのイベント伝播を停止 (SPAナビゲーション等が動かないように)
+            e.stopPropagation();
+
+            // WebPhoneの状態チェック
             if (window.webPhoneCtrl && window.webPhoneCtrl.state !== 'DISCONNECTED') {
                 e.preventDefault(); // フォーム送信を止める
 
@@ -602,6 +618,7 @@ document.addEventListener('DOMContentLoaded', function() {
             else {
                 // e.preventDefault() しない = そのままフォームが送信される
                 // PHP側の if (isset($_POST['action_c2c_phone'])) ブロックが動く
+                // ※ spa-navigation.js がフォーム送信をフックしてAjax化してくれる
                 
                 // バリデーション用に番号取得
                 const inputName = this.getAttribute('data-phone-input');
@@ -695,5 +712,5 @@ document.addEventListener('DOMContentLoaded', function() {
                 });
         });
     }
-});
+})(); // IIFE終了
 </script>

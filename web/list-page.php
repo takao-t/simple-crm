@@ -81,7 +81,7 @@ if ($current_page > $total_pages && $total_pages > 0) {
 
 <?php if ($current_tab === 'all'): ?>
     <div style="margin-bottom: 20px; margin-top: 15px;">
-        <a href="php/export-csv.php" class="btn btn-neutral" style="padding: 5px 15px;">
+        <a href="php/export-csv.php" class="btn btn-neutral no-ajax" style="padding: 5px 15px;">
             <span style="font-weight: bold;">📥 CSVデータを全件エクスポート</span>
         </a>
     </div>
@@ -107,7 +107,7 @@ if ($current_page > $total_pages && $total_pages > 0) {
                 </tr>
             <?php else: ?>
                 <?php foreach ($customers as $row): ?>
-                    <tr onclick="location.href='index.php?page=crm-page&phone=<?= urlencode($row['phone']) ?>'">
+                    <tr onclick="window.spaNavigate('index.php?page=crm-page&phone=<?= urlencode($row['phone']) ?>')">
                         <td><?= htmlspecialchars($row['last_name'] . ' ' . $row['first_name']) ?></td>
                         <td><?= htmlspecialchars($row['organization']) ?></td>
                         <td><?= htmlspecialchars($row['phone']) ?></td>
