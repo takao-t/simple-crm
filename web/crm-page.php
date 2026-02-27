@@ -712,5 +712,27 @@ $action_url = 'index.php?' . http_build_query($current_params);
                 });
         });
     }
+
+    // --- 追加：SPA(Ajax)送信時に、クリックされたボタンの値を確実にPOSTに含める処理 ---
+    const submitButtons = document.querySelectorAll('#crm-form button[type="submit"]');
+    submitButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const form = document.getElementById('crm-form');
+            
+            // 既存の補助用hiddenがあれば削除（連続クリックや別ボタンへの対応）
+            const existingHidden = form.querySelector('.spa-action-helper');
+            if (existingHidden) existingHidden.remove();
+
+            // クリックされたボタンの名前(name)と値(value)を隠しフィールドとして追加
+            if (this.name) {
+                const hidden = document.createElement('input');
+                hidden.type = 'hidden';
+                hidden.className = 'spa-action-helper';
+                hidden.name = this.name;
+                hidden.value = this.value || '1';
+                form.appendChild(hidden);
+            }
+        });
+    });
 })(); // IIFE終了
 </script>

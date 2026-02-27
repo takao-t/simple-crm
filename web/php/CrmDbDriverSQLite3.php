@@ -29,6 +29,7 @@ class CrmDbDriverSQLite3
     {
         $db = new SQLite3(CRM_DB_PATH);
         $db->busyTimeout(5000); // ロック待ち時間のタイムアウト設定
+	$db->enableExceptions(true);
         return $db;
     }
 
@@ -534,9 +535,9 @@ class CrmDbDriverSQLite3
         try {
             $db = $this->getDbConnection();
             
-            // カラムチェックを行うヘルパー関数 (内部定義)
-            $checkColumn = function($colName) use ($db) {
-                $res = $db->query("PRAGMA table_info(customers)");
+            // $db を引数として渡す設計に変更（useによるスコープ問題を回避）
+            $checkColumn = function($conn, $colName) {
+                $res = $conn->query("PRAGMA table_info(customers)");
                 while ($row = $res->fetchArray(SQLITE3_ASSOC)) {
                     if ($row['name'] === $colName) {
                         return true;
@@ -546,25 +547,14 @@ class CrmDbDriverSQLite3
             };
 
             // 1. mobile_phone のチェックと追加
-            if (!$checkColumn('mobile_phone')) {
-                $db->close(); // ロック解除のため一旦クローズ
-                $db_write = new SQLite3(CRM_DB_PATH);
-                $db_write->busyTimeout(5000);
-                $db_write->exec('ALTER TABLE customers ADD COLUMN mobile_phone TEXT');
-                $db_write->close();
-                // 再接続
-                $db = $this->getDbConnection();
+            if (!$checkColumn($db, 'mobile_phone')) {
+                // クローズ＆再接続せず、そのまま実行でOKです
+                $db->exec('ALTER TABLE customers ADD COLUMN mobile_phone TEXT');
             }
 
-            // 2. ★追加: last_updated_by (最終更新者) のチェックと追加
-            if (!$checkColumn('last_updated_by')) {
-                $db->close();
-                $db_write = new SQLite3(CRM_DB_PATH);
-                $db_write->busyTimeout(5000);
-                $db_write->exec('ALTER TABLE customers ADD COLUMN last_updated_by TEXT');
-                $db_write->close();
-                // 再接続
-                $db = $this->getDbConnection();
+            // 2. last_updated_by のチェックと追加
+            if (!$checkColumn($db, 'last_updated_by')) {
+                $db->exec('ALTER TABLE customers ADD COLUMN last_updated_by TEXT');
             }
             
             $db->close();
